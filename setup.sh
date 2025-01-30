@@ -18,3 +18,9 @@ while virsh list --all | grep running > /dev/null; do
 done
 
 echo "All VMs shutdown."
+
+# Gracefully shutdown VMs
+echo "starting VMs..."
+virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
+    virsh start $vm_name
+done
