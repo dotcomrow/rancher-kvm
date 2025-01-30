@@ -208,7 +208,7 @@ resource "libvirt_domain" "srvr_node" {
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
-    wait_for_lease = false
+    wait_for_lease = true
   }
 
   console {
@@ -256,7 +256,7 @@ resource "libvirt_domain" "etcd_node" {
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
-    wait_for_lease = false
+    wait_for_lease = true
   }
 
   console {
@@ -304,7 +304,7 @@ resource "libvirt_domain" "ctrl_node" {
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
-    wait_for_lease = false
+    wait_for_lease = true
   }
 
   console {
@@ -346,7 +346,7 @@ resource "libvirt_domain" "work_node" {
   memory     = var.WORK_NODE_MEMORY
   vcpu       = var.WORK_NODE_VCPU
   autostart  = true
-  qemu_agent = false
+  qemu_agent = true
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
