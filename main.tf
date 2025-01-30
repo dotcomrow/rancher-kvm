@@ -183,7 +183,6 @@ resource "libvirt_cloudinit_disk" "cloudinit" {
   name             = "${var.VM_CLUSTER}_cloudinit.iso"
   user_data        = data.template_file.user_data.rendered
   network_config   = data.template_file.network_config.rendered
-  data_source_type = "ec2"
   pool             = libvirt_pool.vm.name
 }
 
