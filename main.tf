@@ -203,12 +203,12 @@ resource "libvirt_domain" "srvr_node" {
   vcpu       = var.SRVR_NODE_VCPU
   autostart  = true
   qemu_agent = false
-  network_interface_wait_for_lease = false
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
+    wait_for_lease = false
   }
 
   console {
@@ -251,12 +251,12 @@ resource "libvirt_domain" "etcd_node" {
   vcpu       = var.ETCD_NODE_VCPU
   autostart  = true
   qemu_agent = false
-  network_interface_wait_for_lease = false
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
+    wait_for_lease = false
   }
 
   console {
@@ -299,12 +299,12 @@ resource "libvirt_domain" "ctrl_node" {
   vcpu       = var.CTRL_NODE_VCPU
   autostart  = true
   qemu_agent = false
-  network_interface_wait_for_lease = false
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
+    wait_for_lease = false
   }
 
   console {
@@ -347,12 +347,12 @@ resource "libvirt_domain" "work_node" {
   vcpu       = var.WORK_NODE_VCPU
   autostart  = true
   qemu_agent = false
-  network_interface_wait_for_lease = false
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
+    wait_for_lease = false
   }
 
   console {
