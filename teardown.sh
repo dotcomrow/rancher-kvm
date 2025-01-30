@@ -22,4 +22,4 @@ done
 
 echo "All VMs shutdown."
 
-terraform destroy
+terraform destroy --auto-approve
