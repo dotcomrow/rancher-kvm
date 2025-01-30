@@ -161,7 +161,9 @@ data "template_file" "network_config" {
 resource "libvirt_pool" "vm" {
   name = "${var.VM_CLUSTER}_pool"
   type = "dir"
-  path = var.VM_IMG_DIR
+  target {
+    path = var.VM_IMG_DIR
+  }
 }
 
 resource "libvirt_network" "vm_public_network" {
