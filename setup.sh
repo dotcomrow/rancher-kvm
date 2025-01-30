@@ -1,12 +1,6 @@
 terraform init
 terraform apply --auto-approve
 
-# Check if the user is root
-if [ "$EUID" -ne 0 ]; then
-    echo "This script must be run as root."
-    exit 1
-fi
-
 # List running VMs
 echo "Running VMs:"
 virsh list --all | grep running
