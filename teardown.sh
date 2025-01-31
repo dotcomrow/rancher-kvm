@@ -1,4 +1,5 @@
-rm -rf /home/chris/isos/*node.img
+sudo rm -rf /home/chris/isos/*node.img
+sudo rm -rf /home/chris/disks/*node.qcow2
 
 # List running VMs
 echo "Running VMs:"
