@@ -1,4 +1,3 @@
-sudo rm -rf /home/chris/disks
 
 # List running VMs
 echo "Running VMs:"
