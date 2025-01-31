@@ -234,12 +234,12 @@ resource "libvirt_domain" "srvr_node" {
   vcpu       = var.SRVR_NODE_VCPU
   autostart  = true
   qemu_agent = true
-  host_name  = format("${var.SRVR_NODE_HOSTNAME}-%02s", count.index)
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
+    hostname  = format("${var.SRVR_NODE_HOSTNAME}-%02s", count.index)
   }
 
   console {
@@ -283,12 +283,12 @@ resource "libvirt_domain" "etcd_node" {
   vcpu       = var.ETCD_NODE_VCPU
   autostart  = true
   qemu_agent = true
-  host_name  = format("${var.ETCD_NODE_HOSTNAME}-%02s", count.index)
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
+    hostname  = format("${var.ETCD_NODE_HOSTNAME}-%02s", count.index)
   }
 
   console {
@@ -332,12 +332,12 @@ resource "libvirt_domain" "ctrl_node" {
   vcpu       = var.CTRL_NODE_VCPU
   autostart  = true
   qemu_agent = true
-  host_name  = format("${var.CTRL_NODE_HOSTNAME}-%02s", count.index)
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
+    hostname  = format("${var.CTRL_NODE_HOSTNAME}-%02s", count.index)
   }
 
   console {
@@ -381,12 +381,12 @@ resource "libvirt_domain" "work_node" {
   vcpu       = var.WORK_NODE_VCPU
   autostart  = true
   qemu_agent = true
-  host_name  = format("${var.WORK_NODE_HOSTNAME}-%02s", count.index)
 
   cloudinit = libvirt_cloudinit_disk.cloudinit.id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
+    hostname  = format("${var.WORK_NODE_HOSTNAME}-%02s", count.index)
   }
 
   console {
