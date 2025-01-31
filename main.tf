@@ -214,7 +214,7 @@ resource "libvirt_volume" "srvr_node" {
   count  = var.SRVR_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.SRVR_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  source = var.VM_IMG_PATH
+  base_volume_name = var.VM_IMG_PATH
   format = var.VM_IMG_FORMAT
   size   = var.SRVR_VM_IMG_SIZE
 }
@@ -263,7 +263,7 @@ resource "libvirt_volume" "etcd_node" {
   count  = var.ETCD_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.ETCD_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  source = var.VM_IMG_PATH
+  base_volume_name = var.VM_IMG_PATH
   format = var.VM_IMG_FORMAT
   size   = var.ETCD_VM_IMG_SIZE
 }
@@ -312,7 +312,7 @@ resource "libvirt_volume" "ctrl_node" {
   count  = var.CTRL_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.CTRL_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  source = var.VM_IMG_PATH
+  base_volume_name = var.VM_IMG_PATH
   format = var.VM_IMG_FORMAT
   size   = var.CTRL_VM_IMG_SIZE
 }
@@ -361,7 +361,7 @@ resource "libvirt_volume" "work_node" {
   count  = var.WORK_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.WORK_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  source = var.VM_IMG_PATH
+  base_volume_name = var.VM_IMG_PATH
   format = var.VM_IMG_FORMAT
   size   = var.WORK_VM_IMG_SIZE
 }
