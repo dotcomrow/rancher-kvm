@@ -1,3 +1,5 @@
+rm -rf /home/chris/disks/*
+rm -rf /home/chris/isos/*node*
 
 # List running VMs
 echo "Running VMs:"
