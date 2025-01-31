@@ -18,6 +18,7 @@ while virsh list --all | grep running > /dev/null; do
 done
 
 echo "All VMs shutdown."
+virsh list --all | grep off
 
 # Gracefully shutdown VMs
 echo "starting VMs..."
