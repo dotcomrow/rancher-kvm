@@ -61,6 +61,11 @@ variable "SRVR_NODE_MEMORY" {
   type    = string
 }
 
+variable "SRVR_VM_IMG_SIZE" {
+  default = "20G"
+  type    = string
+}
+
 ## ETCD Nodes
 
 variable "ETCD_NODE_HOSTNAME" {
@@ -80,6 +85,11 @@ variable "ETCD_NODE_VCPU" {
 
 variable "ETCD_NODE_MEMORY" {
   default = "6144"
+  type    = string
+}
+
+variable "ETCD_VM_IMG_SIZE" {
+  default = "20G"
   type    = string
 }
 
@@ -105,6 +115,11 @@ variable "CTRL_NODE_MEMORY" {
   type    = string
 }
 
+variable "CTRL_VM_IMG_SIZE" {
+  default = "20G"
+  type    = string
+}
+
 ## Worker Nodes
 
 variable "WORK_NODE_HOSTNAME" {
@@ -124,6 +139,11 @@ variable "WORK_NODE_VCPU" {
 
 variable "WORK_NODE_MEMORY" {
   default = "24576"
+  type    = string
+}
+
+variable "WORK_VM_IMG_SIZE" {
+  default = "20G"
   type    = string
 }
 
@@ -196,6 +216,7 @@ resource "libvirt_volume" "srvr_node" {
   pool   = libvirt_pool.vm.name
   source = var.VM_IMG_PATH
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "srvr_node" {
@@ -244,6 +265,7 @@ resource "libvirt_volume" "etcd_node" {
   pool   = libvirt_pool.vm.name
   source = var.VM_IMG_PATH
   format = var.VM_IMG_FORMAT
+  size   = var.ETCD_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "etcd_node" {
@@ -292,6 +314,7 @@ resource "libvirt_volume" "ctrl_node" {
   pool   = libvirt_pool.vm.name
   source = var.VM_IMG_PATH
   format = var.VM_IMG_FORMAT
+  size   = var.CTRL_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "ctrl_node" {
@@ -340,6 +363,7 @@ resource "libvirt_volume" "work_node" {
   pool   = libvirt_pool.vm.name
   source = var.VM_IMG_PATH
   format = var.VM_IMG_FORMAT
+  size   = var.WORK_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "work_node" {
