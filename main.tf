@@ -62,7 +62,7 @@ variable "SRVR_NODE_MEMORY" {
 }
 
 variable "SRVR_VM_IMG_SIZE" {
-  default = "20G"
+  default =  20 * 1024 * 1024 * 1024 # 20GiB.
   type    = string
 }
 
@@ -89,7 +89,7 @@ variable "ETCD_NODE_MEMORY" {
 }
 
 variable "ETCD_VM_IMG_SIZE" {
-  default = "20G"
+  default = 20 * 1024 * 1024 * 1024 # 20GiB.
   type    = string
 }
 
@@ -116,7 +116,7 @@ variable "CTRL_NODE_MEMORY" {
 }
 
 variable "CTRL_VM_IMG_SIZE" {
-  default = "20G"
+  default = 20 * 1024 * 1024 * 1024 # 20GiB.
   type    = string
 }
 
@@ -143,7 +143,7 @@ variable "WORK_NODE_MEMORY" {
 }
 
 variable "WORK_VM_IMG_SIZE" {
-  default = "20G"
+  default = 20 * 1024 * 1024 * 1024 # 20GiB.
   type    = string
 }
 
