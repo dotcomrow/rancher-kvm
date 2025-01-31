@@ -203,14 +203,21 @@ resource "libvirt_cloudinit_disk" "cloudinit" {
   pool             = libvirt_pool.vm.name
 }
 
+resource "libvirt_volume" "os_image_ubuntu" {
+  name   = "os_image_ubuntu"
+  pool   = "default"
+  source = "/home/chris/isos/ubuntu-24.04-server-cloudimg-amd64.img"
+}
+
 ## SRVR Node
 
 resource "libvirt_volume" "srvr_node" {
   count  = var.SRVR_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.SRVR_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  base_volume_name = "/home/chris/disks/srvr_node.qcow2"
+  base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "srvr_node" {
@@ -257,8 +264,9 @@ resource "libvirt_volume" "etcd_node" {
   count  = var.ETCD_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.ETCD_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  base_volume_name = "/home/chris/disks/etcd_node.qcow2"
+  base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "etcd_node" {
@@ -305,8 +313,9 @@ resource "libvirt_volume" "ctrl_node" {
   count  = var.CTRL_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.CTRL_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  base_volume_name = "/home/chris/disks/ctrl_node.qcow2"
+  base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "ctrl_node" {
@@ -353,8 +362,9 @@ resource "libvirt_volume" "work_node" {
   count  = var.WORK_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.WORK_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  base_volume_name = "/home/chris/disks/work_node.qcow2"
+  base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "work_node" {

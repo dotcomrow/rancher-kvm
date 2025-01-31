@@ -1,27 +1,3 @@
-CTRL_IMG_SIZE=20G
-WORK_IMG_SIZE=20G
-ETCD_IMG_SIZE=20G
-SRVR_IMG_SIZE=20G
-
-cp /home/chris/isos/ubuntu-24.04-server-cloudimg-amd64.img /home/chris/isos/ctrl_node.img
-cp /home/chris/isos/ubuntu-24.04-server-cloudimg-amd64.img /home/chris/isos/work_node.img
-cp /home/chris/isos/ubuntu-24.04-server-cloudimg-amd64.img /home/chris/isos/etcd_node.img
-cp /home/chris/isos/ubuntu-24.04-server-cloudimg-amd64.img /home/chris/isos/srvr_node.img
-
-qemu-img resize /home/chris/isos/ctrl_node.img +$CTRL_IMG_SIZE
-qemu-img resize /home/chris/isos/work_node.img +$WORK_IMG_SIZE
-qemu-img resize /home/chris/isos/etcd_node.img +$ETCD_IMG_SIZE
-qemu-img resize /home/chris/isos/srvr_node.img +$SRVR_IMG_SIZE
-
-qemu-img create -f qcow2 /home/chris/disks/ctrl_node.qcow2 $CTRL_IMG_SIZE
-qemu-img create -f qcow2 /home/chris/disks/work_node.qcow2 $WORK_IMG_SIZE
-qemu-img create -f qcow2 /home/chris/disks/etcd_node.qcow2 $ETCD_IMG_SIZE
-qemu-img create -f qcow2 /home/chris/disks/srvr_node.qcow2 $SRVR_IMG_SIZE
-
-qemu-img convert -f raw /home/chris/isos/ctrl_node.img -O qcow2 /home/chris/disks/ctrl_node.qcow2
-qemu-img convert -f raw /home/chris/isos/work_node.img -O qcow2 /home/chris/disks/work_node.qcow2
-qemu-img convert -f raw /home/chris/isos/etcd_node.img -O qcow2 /home/chris/disks/etcd_node.qcow2
-qemu-img convert -f raw /home/chris/isos/srvr_node.img -O qcow2 /home/chris/disks/srvr_node.qcow2
 
 terraform init
 terraform apply --auto-approve
