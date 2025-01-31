@@ -10,7 +10,7 @@ variable "VM_USER" {
 }
 
 variable "VM_IMG_DIR" {
-  default = "/home/chris/images"
+  default = "/home/chris/disks"
   type    = string
 }
 
