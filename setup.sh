@@ -1,3 +1,5 @@
+mkdir /home/chris/images
+chown -R libvirt-qemu:kvm /home/chris/images
 
 terraform init
 terraform apply --auto-approve
