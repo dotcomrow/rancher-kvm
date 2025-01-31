@@ -164,10 +164,39 @@ provider "libvirt" {
 # https://www.terraform.io/docs/providers/template/d/file.html
 
 # https://www.terraform.io/docs/providers/template/d/cloudinit_config.html
-data "template_file" "user_data" {
-  template = file("${path.module}/cloud_init.cfg")
+data "template_file" "user_data_srvr" {
+  count = var.SRVR_NODE_COUNT
+  template = file("${path.module}/cloud_init_srvr.cfg")
   vars = {
     VM_USER = var.VM_USER
+    HOSTNAME = format("${var.SRVR_NODE_HOSTNAME}-%02s", count.index)
+  }
+}
+
+data "template_file" "user_data_work" {
+  count = var.WORK_NODE_COUNT
+  template = file("${path.module}/cloud_init_work.cfg")
+  vars = {
+    VM_USER = var.VM_USER
+    HOSTNAME = format("${var.WORK_NODE_HOSTNAME}-%02s", count.index)
+  }
+}
+
+data "template_file" "user_data_etcd" {
+  count = var.ETCD_NODE_COUNT
+  template = file("${path.module}/cloud_init_etcd.cfg")
+  vars = {
+    VM_USER = var.VM_USER
+    HOSTNAME = format("${var.ETCD_NODE_HOSTNAME}-%02s", count.index)
+  }
+}
+
+data "template_file" "user_data_ctrl" {
+  count = var.CTRL_NODE_COUNT
+  template = file("${path.module}/cloud_init_ctrl.cfg")
+  vars = {
+    VM_USER = var.VM_USER
+    HOSTNAME = format("${var.CTRL_NODE_HOSTNAME}-%02s", count.index)
   }
 }
 
@@ -202,9 +231,34 @@ resource "libvirt_network" "vm_public_network" {
   }
 }
 
-resource "libvirt_cloudinit_disk" "cloudinit" {
-  name             = "${var.VM_CLUSTER}_cloudinit.iso"
-  user_data        = data.template_file.user_data.rendered
+resource "libvirt_cloudinit_disk" "cloudinit_srvr" {
+  count            = var.SRVR_NODE_COUNT
+  name             = "${var.VM_CLUSTER}_cloudinit_srvr_${count.index}.iso"
+  user_data        = element(data.template_file.user_data_srvr.*.rendered, count.index)
+  network_config   = data.template_file.network_config.rendered
+  pool             = libvirt_pool.vm.name
+}
+
+resource "libvirt_cloudinit_disk" "cloudinit_etcd" {
+  count            = var.ETCD_NODE_COUNT
+  name             = "${var.VM_CLUSTER}_cloudinit_etcd_${count.index}.iso"
+  user_data        = element(data.template_file.user_data_etcd.*.rendered, count.index)
+  network_config   = data.template_file.network_config.rendered
+  pool             = libvirt_pool.vm.name
+}
+
+resource "libvirt_cloudinit_disk" "cloudinit_work" {
+  count            = var.WORK_NODE_COUNT
+  name             = "${var.VM_CLUSTER}_cloudinit_work_${count.index}.iso"
+  user_data        = element(data.template_file.user_data_work.*.rendered, count.index)
+  network_config   = data.template_file.network_config.rendered
+  pool             = libvirt_pool.vm.name
+}
+
+resource "libvirt_cloudinit_disk" "cloudinit_ctrl" {
+  count            = var.CTRL_NODE_COUNT
+  name             = "${var.VM_CLUSTER}_cloudinit_ctrl_${count.index}.iso"
+  user_data        = element(data.template_file.user_data_ctrl.*.rendered, count.index)
   network_config   = data.template_file.network_config.rendered
   pool             = libvirt_pool.vm.name
 }
@@ -235,11 +289,10 @@ resource "libvirt_domain" "srvr_node" {
   autostart  = true
   qemu_agent = false
 
-  cloudinit = libvirt_cloudinit_disk.cloudinit.id
+  cloudinit = libvirt_cloudinit_disk.cloudinit_srvr[count.index].id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
-    hostname  = format("${var.SRVR_NODE_HOSTNAME}-%02s", count.index)
     wait_for_lease = true
   }
 
@@ -285,11 +338,10 @@ resource "libvirt_domain" "etcd_node" {
   autostart  = true
   qemu_agent = false
 
-  cloudinit = libvirt_cloudinit_disk.cloudinit.id
+  cloudinit = libvirt_cloudinit_disk.cloudinit_etcd[count.index].id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
-    hostname  = format("${var.ETCD_NODE_HOSTNAME}-%02s", count.index)
     wait_for_lease = true
   }
 
@@ -335,11 +387,10 @@ resource "libvirt_domain" "ctrl_node" {
   autostart  = true
   qemu_agent = false
 
-  cloudinit = libvirt_cloudinit_disk.cloudinit.id
+  cloudinit = libvirt_cloudinit_disk.cloudinit_ctrl[count.index].id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
-    hostname  = format("${var.CTRL_NODE_HOSTNAME}-%02s", count.index)
     wait_for_lease = true
   }
 
@@ -385,11 +436,10 @@ resource "libvirt_domain" "work_node" {
   autostart  = true
   qemu_agent = false
 
-  cloudinit = libvirt_cloudinit_disk.cloudinit.id
+  cloudinit = libvirt_cloudinit_disk.cloudinit_work[count.index].id
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
-    hostname  = format("${var.WORK_NODE_HOSTNAME}-%02s", count.index)
     wait_for_lease = true
   }
 
