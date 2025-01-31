@@ -9,8 +9,13 @@ variable "VM_USER" {
   type    = string
 }
 
+variable "VM_IMG_PATH" {
+  default = "/home/chris/isos/ubuntu-24.04-server-cloudimg-amd64.img"
+  type    = string
+}
+
 variable "VM_IMG_DIR" {
-  default = "/home/chris/disks"
+  default = "/var/lib/libvirt/images"
   type    = string
 }
 
@@ -56,6 +61,10 @@ variable "SRVR_NODE_MEMORY" {
   type    = string
 }
 
+variable "SRVR_VM_IMG_SIZE" {
+  default =  20 * 1024 * 1024 * 1024 # 20GiB.
+  type    = string
+}
 
 ## ETCD Nodes
 
@@ -76,6 +85,11 @@ variable "ETCD_NODE_VCPU" {
 
 variable "ETCD_NODE_MEMORY" {
   default = "6144"
+  type    = string
+}
+
+variable "ETCD_VM_IMG_SIZE" {
+  default = 20 * 1024 * 1024 * 1024 # 20GiB.
   type    = string
 }
 
@@ -102,6 +116,10 @@ variable "CTRL_NODE_MEMORY" {
   type    = string
 }
 
+variable "CTRL_VM_IMG_SIZE" {
+  default = 20 * 1024 * 1024 * 1024 # 20GiB.
+  type    = string
+}
 
 ## Worker Nodes
 
@@ -125,6 +143,10 @@ variable "WORK_NODE_MEMORY" {
   type    = string
 }
 
+variable "WORK_VM_IMG_SIZE" {
+  default = 20 * 1024 * 1024 * 1024 # 20GiB.
+  type    = string
+}
 
 ################################################################################
 # PROVIDERS
@@ -187,15 +209,22 @@ resource "libvirt_cloudinit_disk" "cloudinit" {
   pool             = libvirt_pool.vm.name
 }
 
+resource "libvirt_volume" "os_image_ubuntu" {
+  name   = "os_image_ubuntu"
+  pool   = libvirt_pool.vm.name
+  source = "${var.VM_IMG_PATH}"
+}
+
+
 ## SRVR Node
 
 resource "libvirt_volume" "srvr_node" {
   count  = var.SRVR_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.SRVR_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  base_volume_pool = libvirt_pool.vm.name
-  base_volume_name = "srvr_node.qcow2"
+  base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "srvr_node" {
@@ -242,9 +271,9 @@ resource "libvirt_volume" "etcd_node" {
   count  = var.ETCD_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.ETCD_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  base_volume_pool = libvirt_pool.vm.name
-  base_volume_name = "etcd_node.qcow2"
+  base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "etcd_node" {
@@ -291,9 +320,9 @@ resource "libvirt_volume" "ctrl_node" {
   count  = var.CTRL_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.CTRL_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  base_volume_pool = libvirt_pool.vm.name
-  base_volume_name = "ctrl_node.qcow2"
+  base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "ctrl_node" {
@@ -340,9 +369,9 @@ resource "libvirt_volume" "work_node" {
   count  = var.WORK_NODE_COUNT
   name   = format("${var.VM_CLUSTER}-${var.WORK_NODE_HOSTNAME}-%02s_volume.${var.VM_IMG_FORMAT}", count.index)
   pool   = libvirt_pool.vm.name
-  base_volume_pool = libvirt_pool.vm.name
-  base_volume_name = "work_node.qcow2"
+  base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
+  size   = var.SRVR_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "work_node" {
