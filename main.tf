@@ -205,7 +205,7 @@ resource "libvirt_cloudinit_disk" "cloudinit" {
 
 resource "libvirt_volume" "os_image_ubuntu" {
   name   = "os_image_ubuntu"
-  pool   = "default"
+  pool   = libvirt_pool.vm.name
   source = "/home/chris/isos/ubuntu-24.04-server-cloudimg-amd64.img"
 }
 
