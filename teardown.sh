@@ -1,3 +1,4 @@
+rm -rf /home/chris/isos/*node.img
 
 # List running VMs
 echo "Running VMs:"
