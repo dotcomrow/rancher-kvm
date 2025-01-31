@@ -10,7 +10,7 @@ variable "VM_USER" {
 }
 
 variable "VM_IMG_DIR" {
-  default = "/var/lib/libvirt/images"
+  default = "/home/chris/images"
   type    = string
 }
 
