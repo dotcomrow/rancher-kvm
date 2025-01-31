@@ -297,13 +297,13 @@ resource "libvirt_domain" "srvr_node" {
   }
 
   console {
-    type        = "pty"
+    type        = "unix"
     target_port = "0"
     target_type = "serial"
   }
 
   console {
-    type        = "pty"
+    type        = "unix"
     target_type = "virtio"
     target_port = "1"
   }
