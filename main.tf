@@ -291,6 +291,10 @@ resource "libvirt_domain" "srvr_node" {
 
   cloudinit = libvirt_cloudinit_disk.cloudinit_srvr[count.index].id
 
+  cpu {
+    mode = "host-passthrough"
+  }
+
   network_interface {
     network_id = libvirt_network.vm_public_network.id
   }
@@ -338,6 +342,10 @@ resource "libvirt_domain" "etcd_node" {
   qemu_agent = false
 
   cloudinit = libvirt_cloudinit_disk.cloudinit_etcd[count.index].id
+
+  cpu {
+    mode = "host-passthrough"
+  }
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
@@ -387,6 +395,10 @@ resource "libvirt_domain" "ctrl_node" {
 
   cloudinit = libvirt_cloudinit_disk.cloudinit_ctrl[count.index].id
 
+  cpu {
+    mode = "host-passthrough"
+  }
+
   network_interface {
     network_id = libvirt_network.vm_public_network.id
   }
@@ -434,6 +446,10 @@ resource "libvirt_domain" "work_node" {
   qemu_agent = false
 
   cloudinit = libvirt_cloudinit_disk.cloudinit_work[count.index].id
+
+  cpu {
+    mode = "host-passthrough"
+  }
 
   network_interface {
     network_id = libvirt_network.vm_public_network.id
