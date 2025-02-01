@@ -287,7 +287,7 @@ resource "libvirt_domain" "srvr_node" {
   memory     = var.SRVR_NODE_MEMORY
   vcpu       = var.SRVR_NODE_VCPU
   autostart  = true
-  qemu_agent = false
+  qemu_agent = true
 
   cloudinit = libvirt_cloudinit_disk.cloudinit_srvr[count.index].id
 
@@ -336,7 +336,7 @@ resource "libvirt_domain" "etcd_node" {
   memory     = var.ETCD_NODE_MEMORY
   vcpu       = var.ETCD_NODE_VCPU
   autostart  = true
-  qemu_agent = false
+  qemu_agent = true
 
   cloudinit = libvirt_cloudinit_disk.cloudinit_etcd[count.index].id
 
@@ -385,7 +385,7 @@ resource "libvirt_domain" "ctrl_node" {
   memory     = var.CTRL_NODE_MEMORY
   vcpu       = var.CTRL_NODE_VCPU
   autostart  = true
-  qemu_agent = false
+  qemu_agent = true
 
   cloudinit = libvirt_cloudinit_disk.cloudinit_ctrl[count.index].id
 
@@ -434,7 +434,7 @@ resource "libvirt_domain" "work_node" {
   memory     = var.WORK_NODE_MEMORY
   vcpu       = var.WORK_NODE_VCPU
   autostart  = true
-  qemu_agent = false
+  qemu_agent = true
 
   cloudinit = libvirt_cloudinit_disk.cloudinit_work[count.index].id
 
