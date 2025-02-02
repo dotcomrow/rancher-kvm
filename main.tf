@@ -57,7 +57,7 @@ variable "SRVR_NODE_VCPU" {
 }
 
 variable "SRVR_NODE_MEMORY" {
-  default = "2048"
+  default = "8192"
   type    = string
 }
 
@@ -84,7 +84,7 @@ variable "ETCD_NODE_VCPU" {
 }
 
 variable "ETCD_NODE_MEMORY" {
-  default = "6144"
+  default = "8192"
   type    = string
 }
 
@@ -112,7 +112,7 @@ variable "CTRL_NODE_VCPU" {
 }
 
 variable "CTRL_NODE_MEMORY" {
-  default = "2048"
+  default = "8192"
   type    = string
 }
 
