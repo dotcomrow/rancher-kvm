@@ -62,9 +62,9 @@ install_rke2() {
     ssh -n $SSH_USER@$NODE_IP "sudo apt-get update -y && sudo apt-get install -y curl"
     ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
     if [ ! -z "$RKE2_TOKEN" ]; then
-        ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+        ssh -n $SSH_USER@$NODE "echo 'token: $RKE2_TOKEN' | sudo tee /etc/rancher/rke2/config.yaml";
     fi
-    ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
     ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl --classic"
 
@@ -88,7 +88,7 @@ SERVER_NODES=($(virsh list --all | grep running | grep $SERVER_NODE_PATTERN | aw
 while IFS= read -r NODE; do
     install_rke2 "$NODE" "server";
     if [ -z "$RKE2_TOKEN" ]; then
-        RKE2_TOKEN=$(ssh $SSH_USER@$NODE "sudo cat /var/lib/rancher/rke2/server/node-token")
+        RKE2_TOKEN=$(ssh -n $SSH_USER@$NODE "sudo cat /var/lib/rancher/rke2/server/node-token")
     fi
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$SERVER_NODE_PATTERN"'/ {print $2}')
 
@@ -97,8 +97,8 @@ echo "Setting up ETCD Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
     ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
-    ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
-    ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo 'token: $RKE2_TOKEN' | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {print $2}')
@@ -108,8 +108,8 @@ echo "Setting up Control Plane Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
     ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
-    ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
-    ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo 'token: $RKE2_TOKEN' | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {print $2}')
@@ -119,33 +119,33 @@ echo "Setting up Worker Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
     ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
-    ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
-    ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo 'token: $RKE2_TOKEN' | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-agent.service && sudo systemctl start rke2-agent.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$WORKER_NODE_PATTERN"'/ {print $2}')
 
 # Step 5: Validate Cluster Setup
 echo "Verifying cluster status..."
-ssh $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes"
 
 echo "Rancher RKE2 Cluster setup completed!"
 
 # Step 5: Install Helm on the first server node
 echo "Installing Helm on the first server node..."
-ssh $SSH_USER@$RANCHER_MASTER <<EOF
+ssh -n $SSH_USER@$RANCHER_MASTER <<EOF
 curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 EOF
 
 # Step 6: Install Cert-Manager for Rancher
 echo "Installing Cert-Manager for TLS certificates..."
-ssh $SSH_USER@$RANCHER_MASTER <<EOF
+ssh -n $SSH_USER@$RANCHER_MASTER <<EOF
 sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
 EOF
 
 # Step 7: Install Rancher via Helm
 echo "Deploying Rancher UI on RKE2 cluster..."
-ssh $SSH_USER@$RANCHER_MASTER <<EOF
+ssh -n $SSH_USER@$RANCHER_MASTER <<EOF
 sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 sudo helm repo update
 sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace cattle-system
@@ -154,11 +154,11 @@ EOF
 
 # Step 8: Wait for Rancher to Deploy
 echo "Waiting for Rancher deployment to complete..."
-ssh $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/rancher -n cattle-system"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/rancher -n cattle-system"
 
 # Verify installation
 echo "Verifying cluster and Rancher status..."
-ssh $SSH_USER@$RANCHER_MASTER <<EOF
+ssh -n $SSH_USER@$RANCHER_MASTER <<EOF
 sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes
 sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n cattle-system
 EOF
