@@ -35,7 +35,7 @@ SSH_USER="rancher"
 RANCHER_MASTER="srvr-node-00"
 
 # Rancher domain
-RANCHER_DOMAIN="rancher.suncoast.systems"
+RANCHER_DOMAIN="rancher"
 
 
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
