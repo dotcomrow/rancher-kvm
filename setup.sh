@@ -42,7 +42,7 @@ install_rke2() {
     
     ssh -n $SSH_USER@$NODE_IP "sudo apt-get update -y && sudo apt-get install -y curl"
     ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
-    ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl"
+    ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl --classic"
 
     if [[ "$NODE_TYPE" == "server" ]]; then
         ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service"
