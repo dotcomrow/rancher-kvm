@@ -29,10 +29,10 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     ssh -n $SSH_USER@$vm_name "sudo apt install pipx -y && pipx ensurepath && pipx install hostsed && sudo apt install hostsed"
     virsh list --all | grep running | awk '{print $2}' | while read additional_host; do
         if [ "$vm_name" != "$additional_host" ]; then
-                echo "Adding $additional_host to $vm_name hosts file..."
-                IP=$(virsh domifaddr $additional_host --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1)
-                ssh -n $SSH_USER@$vm_name "sudo hostsed add $IP $additional_host"
-                ssh -n $SSH_USER@$vm_name "ssh-keyscan -H $additional_host >> ~/.ssh/known_hosts"
+                echo "Adding $additional_host to $vm_name hosts file...";
+                IP=$(virsh domifaddr $additional_host --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1);
+                ssh -n $SSH_USER@$vm_name "sudo hostsed add $IP $additional_host";
+                ssh -n $SSH_USER@$vm_name "ssh-keyscan -H $additional_host >> ~/.ssh/known_hosts";
         fi
     done
 done
@@ -69,9 +69,9 @@ install_rke2() {
     ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl --classic"
 
     if [[ "$NODE_TYPE" == "server" ]]; then
-        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service"
+        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
     else
-        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent.service && sudo systemctl start rke2-agent.service"
+        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent.service && sudo systemctl start rke2-agent.service";
     fi
 }
 
