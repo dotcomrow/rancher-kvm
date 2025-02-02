@@ -88,7 +88,7 @@ SERVER_NODES=($(virsh list --all | grep running | grep $SERVER_NODE_PATTERN | aw
 while IFS= read -r NODE; do
     install_rke2 "$NODE" "server";
     if [ -z "$RKE2_TOKEN" ]; then
-        RKE2_TOKEN=$(ssh -n $SSH_USER@$NODE "sudo cat /var/lib/rancher/rke2/server/node-token")
+        RKE2_TOKEN=$(ssh -n $SSH_USER@$NODE "sudo cat /var/lib/rancher/rke2/server/node-token");
     fi
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$SERVER_NODE_PATTERN"'/ {print $2}')
 
