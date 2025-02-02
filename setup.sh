@@ -1,5 +1,8 @@
 #!/bin/bash
 
+rm -rf /var/log/rks2-setup.log
+exec 1>/var/log/rks2-setup.log 2>&1
+
 terraform init
 terraform apply --auto-approve
 
