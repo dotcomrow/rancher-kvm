@@ -92,7 +92,9 @@ RKE2_TOKEN=$(ssh $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/serve
 echo "Setting up ETCD Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
-    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
+    ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
+    ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {print $2}')
 
@@ -100,7 +102,9 @@ done < <(virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {pri
 echo "Setting up Control Plane Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
-    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
+    ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
+    ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {print $2}')
 
