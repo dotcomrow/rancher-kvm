@@ -60,7 +60,10 @@ install_rke2() {
     echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
     
     ssh -n $SSH_USER@$NODE_IP "sudo apt-get update -y && sudo apt-get install -y curl"
-    ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
+    if [ ! -z "$RKE2_TOKEN" ]; then
+        ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+    fi
     ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
     ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl --classic"
@@ -84,11 +87,10 @@ SERVER_NODES=($(virsh list --all | grep running | grep $SERVER_NODE_PATTERN | aw
 
 while IFS= read -r NODE; do
     install_rke2 "$NODE" "server";
+    if [ -z "$RKE2_TOKEN" ]; then
+        RKE2_TOKEN=$(ssh $SSH_USER@$NODE "sudo cat /var/lib/rancher/rke2/server/node-token")
+    fi
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$SERVER_NODE_PATTERN"'/ {print $2}')
-
-# Get the first node's token for other servers to join
-echo "Fetching RKE2 cluster token..."
-RKE2_TOKEN=$(ssh $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token")
 
 # Step 2: Install RKE2 on ETCD Nodes
 echo "Setting up ETCD Nodes..."
