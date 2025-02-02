@@ -140,10 +140,10 @@ EOF
 # Step 7: Install Rancher via Helm
 echo "Deploying Rancher UI on RKE2 cluster..."
 ssh $SSH_USER@$RANCHER_MASTER <<EOF
-helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
-helm repo update
+sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+sudo helm repo update
 sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace cattle-system
-helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=$RANCHER_DOMAIN --set bootstrapPassword=admin
+sudo helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=$RANCHER_DOMAIN --set bootstrapPassword=admin --kubeconfig /etc/rancher/rke2/rke2.yaml
 EOF
 
 # Step 8: Wait for Rancher to Deploy
