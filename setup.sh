@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if script is run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root or use sudo"
+    exit 1
+fi
+
 rm -rf /tmp/rks2-setup.log
 exec 1>/tmp/rks2-setup.log 2>&1
 
