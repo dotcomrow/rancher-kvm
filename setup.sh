@@ -25,6 +25,19 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
 done
 
 
+virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
+    ssh -n $SSH_USER@$vm_name "sudo apt install pipx -y && pipx ensurepath && pipx install hostsed && sudo apt install hostsed"
+    virsh list --all | grep running | awk '{print $2}' | while read additional_host; do
+        if [ "$vm_name" != "$additional_host" ]; then
+                echo "Adding $additional_host to $vm_name hosts file..."
+                IP=$(virsh domifaddr $additional_host --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1)
+                ssh -n $SSH_USER@$vm_name "sudo hostsed add $IP $additional_host"
+                ssh -n $SSH_USER@$vm_name "ssh-keyscan -H $additional_host >> ~/.ssh/known_hosts"
+        fi
+    done
+done
+
+
 # Rancher RKE2 Cluster Installation Script
 
 
@@ -95,7 +108,10 @@ done < <(virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {
 echo "Setting up Worker Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
-    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
+    ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
+    ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-agent.service && sudo systemctl start rke2-agent.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$WORKER_NODE_PATTERN"'/ {print $2}')
 
