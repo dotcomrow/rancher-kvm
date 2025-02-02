@@ -17,12 +17,25 @@ rm -rf ~/.ssh/known_hosts
 # iterate over machines and add host entries to hosts file using qemu guest agent
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     while grep -q "error" <(virsh domifaddr $vm_name --source agent 2>&1); do
-        sleep 1
+        sleep 1;
     done
-    IP=$(virsh domifaddr $vm_name --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1)
-    sudo hostsed add $IP $vm_name
-    ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts
+    IP=$(virsh domifaddr $vm_name --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1);
+    sudo hostsed add $IP $vm_name;
+    ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
+
+
+# Rancher Version
+RKE2_VERSION="v1.31.3+rke2r1"
+
+# SSH User
+SSH_USER="rancher"
+
+# Rancher master node
+RANCHER_MASTER="srvr-node-00"
+
+# Rancher domain
+RANCHER_DOMAIN="rancher.suncoast.systems"
 
 
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
@@ -39,19 +52,6 @@ done
 
 
 # Rancher RKE2 Cluster Installation Script
-
-
-# Rancher Version
-RKE2_VERSION="v1.31.3+rke2r1"
-
-# SSH User
-SSH_USER="rancher"
-
-# Rancher master node
-RANCHER_MASTER="srvr-node-00"
-
-# Rancher domain
-RANCHER_DOMAIN="rancher.suncoast.systems"
 
 # Function to install RKE2 on a node
 install_rke2() {
@@ -81,9 +81,6 @@ SERVER_NODE_PATTERN="srvr-node-"
 ETCD_NODE_PATTERN="etcd-node-"
 CONTROL_NODE_PATTERN="ctrl-node-"
 WORKER_NODE_PATTERN="work-node-"
-
-# Get all server nodes
-SERVER_NODES=($(virsh list --all | grep running | grep $SERVER_NODE_PATTERN | awk '{print $2}'))
 
 while IFS= read -r NODE; do
     install_rke2 "$NODE" "server";
