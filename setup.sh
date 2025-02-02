@@ -39,6 +39,7 @@ install_rke2() {
     
     ssh -n $SSH_USER@$NODE_IP "sudo apt-get update -y && sudo apt-get install -y curl"
     ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
+    ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl"
 
     if [[ "$NODE_TYPE" == "server" ]]; then
         ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service"
@@ -69,7 +70,7 @@ RKE2_TOKEN=$(ssh $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/serve
 echo "Setting up ETCD Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
-    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
+    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {print $2}')
 
@@ -77,7 +78,7 @@ done < <(virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {pri
 echo "Setting up Control Plane Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
-    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
+    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {print $2}')
 
@@ -85,7 +86,7 @@ done < <(virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {
 echo "Setting up Worker Nodes..."
 while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
-    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
+    ssh -n $SSH_USER@$NODE "export INSTALL_RKE2_TOKEN='$RKE2_TOKEN' && curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-agent.service && sudo systemctl start rke2-agent.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$WORKER_NODE_PATTERN"'/ {print $2}')
 
