@@ -60,6 +60,8 @@ install_rke2() {
     echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
     
     ssh -n $SSH_USER@$NODE_IP "sudo apt-get update -y && sudo apt-get install -y curl"
+    ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
     ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl --classic"
 
@@ -94,6 +96,7 @@ while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
     ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
     ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {print $2}')
@@ -104,6 +107,7 @@ while IFS= read -r NODE; do
     echo "Installing Rancher RKE on $NODE";
     ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
     ssh -n $SSH_USER@$NODE "echo "token: $RKE2_TOKEN" | sudo tee /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE "echo "server: https://$RANCHER_MASTER:9345" | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -";
     ssh -n $SSH_USER@$NODE "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {print $2}')
