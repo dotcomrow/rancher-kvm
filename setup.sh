@@ -112,6 +112,8 @@ install_rke2() {
     local NODE_TYPE=$2
     echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
 
+    ssh -n $SSH_USER@$NODE_IP "sudo mkdir -p /etc/rancher/rke2";
+
     # Copy certificates to the node
     copy_certs_and_trust  $NODE_IP
 
