@@ -79,12 +79,12 @@ variable "ETCD_NODE_COUNT" {
 }
 
 variable "ETCD_NODE_VCPU" {
-  default = 2
+  default = 4
   type    = number
 }
 
 variable "ETCD_NODE_MEMORY" {
-  default = "8192"
+  default = "16384"
   type    = string
 }
 
@@ -134,7 +134,7 @@ variable "WORK_NODE_COUNT" {
 }
 
 variable "WORK_NODE_VCPU" {
-  default = 15
+  default = 14
   type    = number
 }
 
