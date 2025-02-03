@@ -39,7 +39,7 @@ RANCHER_DOMAIN="rancher"
 
 
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
-    scp ~/.ssh/know_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts;
+    scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts;
     scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts;
     ssh -n $SSH_USER@$vm_name "sudo cp /tmp/hosts /etc/hosts";
     ssh -n $SSH_USER@$vm_name "sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts";
