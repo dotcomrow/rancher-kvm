@@ -44,26 +44,48 @@ RETRY_DELAY=10
 
 execute_with_retry() {
     local cmd="$1"
-    local attempt=1
+    local verify_cmd="$2"
+    local retries=$MAX_RETRIES  # Number of retries
+    local delay=$RETRY_DELAY    # Delay between retries in seconds
+    local count=0
 
-    while [ $attempt -le $MAX_RETRIES ]; do
-        echo "Attempt $attempt: $cmd"
-        eval "$cmd" && return 0  # If the command succeeds, exit the function
-        echo "Command failed. Retrying in $RETRY_DELAY seconds..."
-        sleep $RETRY_DELAY
-        ((attempt++))
+    while [ $count -lt $retries ]; do
+        echo "Executing: $cmd"
+        eval "$cmd"
+
+        echo "Verifying: $verify_cmd"
+        eval "$verify_cmd" && return 0  # If verification succeeds, exit function
+
+        count=$((count + 1))
+        echo "Retry $count/$retries failed, retrying in $delay seconds..."
+        sleep $delay
     done
 
-    echo "Command failed after $MAX_RETRIES attempts: $cmd"
-    return 1  # Return failure if all retries fail
+    echo "❌ ERROR: Command failed after $retries attempts: $cmd"
+    return 1  # Indicate failure
 }
 
 
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
-    execute_with_retry "scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts"
-    execute_with_retry "scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts"
-    execute_with_retry "ssh -n $SSH_USER@$vm_name 'sudo cp /tmp/hosts /etc/hosts'"
-    execute_with_retry "ssh -n $SSH_USER@$vm_name 'sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts'"
+    # 1️⃣ Securely transfer known_hosts and verify
+    execute_with_retry \
+        "scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts" \
+        "ssh -n $SSH_USER@$vm_name 'test -f ~/.ssh/known_hosts'"
+
+    # 2️⃣ Securely transfer /etc/hosts and verify
+    execute_with_retry \
+        "scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts" \
+        "ssh -n $SSH_USER@$vm_name 'test -f /tmp/hosts'"
+
+    # 3️⃣ Move /tmp/hosts to /etc/hosts and verify
+    execute_with_retry \
+        "ssh -n $SSH_USER@$vm_name 'sudo cp /tmp/hosts /etc/hosts'" \
+        "ssh -n $SSH_USER@$vm_name 'test -f /etc/hosts'"
+
+    # 4️⃣ Copy known_hosts to root's SSH directory and verify
+    execute_with_retry \
+        "ssh -n $SSH_USER@$vm_name 'sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts'" \
+        "ssh -n $SSH_USER@$vm_name 'test -f /root/.ssh/known_hosts'"
 
     echo "All operations completed on node $vm_name."
 done
