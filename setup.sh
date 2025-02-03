@@ -86,15 +86,19 @@ copy_certs_and_trust() {
     local NODE_IP=$1
     echo "Copying certificates to $NODE_IP and adding CA to system trust store..."
 
+    ssh -n $SSH_USER@$NODE_IP "sudo mkdir -p /tmp/certs"
+
     # Copy certificates
-    scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:/etc/rancher/rke2/ca.crt
-    scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:/etc/rancher/rke2/ca.key
-    scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:/etc/rancher/rke2/kube-apiserver.crt
-    scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:/etc/rancher/rke2/kube-apiserver.key
-    scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:/etc/rancher/rke2/etcd-server.crt
-    scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:/etc/rancher/rke2/etcd-server.key
-    scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:/etc/rancher/rke2/node.crt
-    scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:/etc/rancher/rke2/node.key
+    scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:/tmp/certs/ca.crt
+    scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:/tmp/certs/ca.key
+    scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:/tmp/certs/kube-apiserver.crt
+    scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:/tmp/certs/kube-apiserver.key
+    scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:/etmp/certs/etcd-server.crt
+    scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:/tmp/certs/etcd-server.key
+    scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:/tmp/certs/node.crt
+    scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:/tmp/certs/node.key
+
+    ssh -n $SSH_USER@$NODE_IP "sudo cp /tmp/certs/* /etc/rancher/rke2/"
 
     # Ensure correct permissions
     ssh $SSH_USER@$NODE_IP "sudo chmod 600 /etc/rancher/rke2/*"
