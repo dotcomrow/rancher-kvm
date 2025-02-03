@@ -122,10 +122,10 @@ install_rke2() {
     copy_certs_and_trust  $NODE_IP
 
     # Install RKE2
-    ssh $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
+    ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
 
     # Create custom RKE2 config with custom certificates
-    ssh $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
+    ssh -n $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
 tls-san:
   - ${NODE_IP}
   - ${RANCHER_DOMAIN}
@@ -152,9 +152,9 @@ EOF"
 
     # Start RKE2
     if [[ "$NODE_TYPE" == "server" ]]; then
-        ssh $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server && sudo systemctl start rke2-server"
+        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server && sudo systemctl start rke2-server"
     else
-        ssh $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent && sudo systemctl start rke2-agent"
+        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent && sudo systemctl start rke2-agent"
     fi
 }
 
@@ -168,12 +168,6 @@ WORKER_NODE_PATTERN="work-node-"
 install_rke2 "$RANCHER_MASTER" "server";
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://docs.projectcalico.org/manifests/calico.yaml";
 RKE2_TOKEN=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token");
-
-ssh $SSH_USER@$RANCHER_MASTER <<EOF
-    sudo cp /var/lib/rancher/rke2/server/tls/etcd/server-ca.crt /usr/local/share/ca-certificates/etcd-server-ca.crt
-    sudo update-ca-certificates
-    sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service
-EOF
 
 while IFS= read -r NODE; do
     if [ "$NODE" == "$RANCHER_MASTER" ]; then
