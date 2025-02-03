@@ -112,7 +112,7 @@ variable "CTRL_NODE_VCPU" {
 }
 
 variable "CTRL_NODE_MEMORY" {
-  default = "8192"
+  default = "4096"
   type    = string
 }
 
@@ -129,17 +129,17 @@ variable "WORK_NODE_HOSTNAME" {
 }
 
 variable "WORK_NODE_COUNT" {
-  default = 3
+  default = 2
   type    = number
 }
 
 variable "WORK_NODE_VCPU" {
-  default = 10
+  default = 15
   type    = number
 }
 
 variable "WORK_NODE_MEMORY" {
-  default = "24576"
+  default = "102400"
   type    = string
 }
 
