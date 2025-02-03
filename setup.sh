@@ -166,7 +166,7 @@ CONTROL_NODE_PATTERN="ctrl-node-"
 WORKER_NODE_PATTERN="work-node-"
 
 install_rke2 "$RANCHER_MASTER" "server";
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://docs.projectcalico.org/manifests/calico.yaml";
+# ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://docs.projectcalico.org/manifests/calico.yaml";
 RKE2_TOKEN=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token");
 
 while IFS= read -r NODE; do
