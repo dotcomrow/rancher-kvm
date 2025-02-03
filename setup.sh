@@ -38,9 +38,9 @@ RANCHER_MASTER="srvr-node-00"
 RANCHER_DOMAIN="rancher"
 
 # Maximum number of retries
-MAX_RETRIES=5
+MAX_RETRIES=10
 # Time to wait between retries
-RETRY_DELAY=2
+RETRY_DELAY=10
 
 execute_with_retry() {
     local cmd="$1"
