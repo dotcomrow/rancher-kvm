@@ -82,11 +82,14 @@ ETCD_NODE_PATTERN="etcd-node-"
 CONTROL_NODE_PATTERN="ctrl-node-"
 WORKER_NODE_PATTERN="work-node-"
 
+install_rke2 "$RANCHER_MASTER" "server";
+RKE2_TOKEN=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token");
+
 while IFS= read -r NODE; do
-    install_rke2 "$NODE" "server";
-    if [ -z "$RKE2_TOKEN" ]; then
-        RKE2_TOKEN=$(ssh -n $SSH_USER@$NODE "sudo cat /var/lib/rancher/rke2/server/node-token");
+    if [ "$NODE" == "$RANCHER_MASTER" ]; then
+        continue;
     fi
+    install_rke2 "$NODE" "server";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$SERVER_NODE_PATTERN"'/ {print $2}')
 
 # Step 2: Install RKE2 on ETCD Nodes
