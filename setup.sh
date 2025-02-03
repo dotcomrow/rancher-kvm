@@ -254,16 +254,3 @@ sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n cattle-system
 EOF
 
 echo "Rancher UI is now accessible at: https://$RANCHER_DOMAIN"
-
-
-
-
-
-
-
-sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml label crd bgpconfigurations.crd.projectcalico.org app.kubernetes.io/managed-by=Helm --overwrite
-sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml annotate crd bgpconfigurations.crd.projectcalico.org meta.helm.sh/release-name=rke2-canal --overwrite
-sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml annotate crd bgpconfigurations.crd.projectcalico.org meta.helm.sh/release-namespace=kube-system --overwrite
-
-
-sudo ETCDCTL_API=3 /var/lib/rancher/rke2/agent/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/2/fs/usr/local/bin/etcdctl --cacert=/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt --cert=/var/lib/rancher/rke2/server/tls/etcd/client.crt --key=/var/lib/rancher/rke2/server/tls/etcd/client.key --endpoints=https://127.0.0.1:2379 endpoint health
