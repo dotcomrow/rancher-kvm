@@ -47,12 +47,12 @@ variable "SRVR_NODE_HOSTNAME" {
 }
 
 variable "SRVR_NODE_COUNT" {
-  default = 2
+  default = 1
   type    = number
 }
 
 variable "SRVR_NODE_VCPU" {
-  default = 2
+  default = 4
   type    = number
 }
 
@@ -74,7 +74,7 @@ variable "ETCD_NODE_HOSTNAME" {
 }
 
 variable "ETCD_NODE_COUNT" {
-  default = 2
+  default = 1
   type    = number
 }
 
@@ -102,12 +102,12 @@ variable "CTRL_NODE_HOSTNAME" {
 }
 
 variable "CTRL_NODE_COUNT" {
-  default = 2
+  default = 1
   type    = number
 }
 
 variable "CTRL_NODE_VCPU" {
-  default = 2
+  default = 4
   type    = number
 }
 
