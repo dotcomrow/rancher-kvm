@@ -37,12 +37,35 @@ RANCHER_MASTER="srvr-node-00"
 # Rancher domain
 RANCHER_DOMAIN="rancher"
 
+# Maximum number of retries
+MAX_RETRIES=5
+# Time to wait between retries
+RETRY_DELAY=2
+
+execute_with_retry() {
+    local cmd="$1"
+    local attempt=1
+
+    while [ $attempt -le $MAX_RETRIES ]; do
+        echo "Attempt $attempt: $cmd"
+        eval "$cmd" && return 0  # If the command succeeds, exit the function
+        echo "Command failed. Retrying in $RETRY_DELAY seconds..."
+        sleep $RETRY_DELAY
+        ((attempt++))
+    done
+
+    echo "Command failed after $MAX_RETRIES attempts: $cmd"
+    return 1  # Return failure if all retries fail
+}
+
 
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
-    scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts;
-    scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts;
-    ssh -n $SSH_USER@$vm_name "sudo cp /tmp/hosts /etc/hosts";
-    ssh -n $SSH_USER@$vm_name "sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts";
+    execute_with_retry "scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts"
+    execute_with_retry "scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts"
+    execute_with_retry "ssh -n $SSH_USER@$vm_name 'sudo cp /tmp/hosts /etc/hosts'"
+    execute_with_retry "ssh -n $SSH_USER@$vm_name 'sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts'"
+
+    echo "All operations completed on node $vm_name."
 done
 
 
