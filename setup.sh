@@ -39,15 +39,10 @@ RANCHER_DOMAIN="rancher"
 
 
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
-    # ssh -n $SSH_USER@$vm_name "sudo apt install pipx -y && pipx ensurepath && pipx install hostsed && sudo apt install hostsed"
-    virsh list --all | grep running | awk '{print $2}' | while read additional_host; do
-        if [ "$vm_name" != "$additional_host" ]; then
-                echo "Adding $additional_host to $vm_name hosts file...";
-                IP=$(virsh domifaddr $additional_host --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1);
-                ssh -n $SSH_USER@$vm_name "sudo hostsed add $IP $additional_host";
-                ssh -n $SSH_USER@$vm_name "ssh-keyscan -H $additional_host >> ~/.ssh/known_hosts";
-        fi
-    done
+    scp ~/.ssh/know_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts;
+    scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts;
+    ssh -n $SSH_USER@$vm_name "sudo cp /tmp/hosts /etc/hosts";
+    ssh -n $SSH_USER@$vm_name "sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts";
 done
 
 
@@ -59,15 +54,13 @@ install_rke2() {
     local NODE_TYPE=$2
     echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
     
-    # ssh -n $SSH_USER@$NODE_IP "sudo apt-get update -y && sudo apt-get install -y curl"
     ssh -n $SSH_USER@$NODE_IP "sudo mkdir -p /etc/rancher/rke2";
     if [ ! -z "$RKE2_TOKEN" ]; then
         ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee /etc/rancher/rke2/config.yaml";
         ssh -n $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     fi
     ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
-    # ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl --classic"
-
+    
     if [[ "$NODE_TYPE" == "server" ]]; then
         ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
     else
