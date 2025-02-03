@@ -52,7 +52,7 @@ variable "SRVR_NODE_COUNT" {
 }
 
 variable "SRVR_NODE_VCPU" {
-  default = 1
+  default = 8
   type    = number
 }
 
@@ -79,7 +79,7 @@ variable "ETCD_NODE_COUNT" {
 }
 
 variable "ETCD_NODE_VCPU" {
-  default = 2
+  default = 8
   type    = number
 }
 
@@ -107,7 +107,7 @@ variable "CTRL_NODE_COUNT" {
 }
 
 variable "CTRL_NODE_VCPU" {
-  default = 1
+  default = 8
   type    = number
 }
 
@@ -134,7 +134,7 @@ variable "WORK_NODE_COUNT" {
 }
 
 variable "WORK_NODE_VCPU" {
-  default = 4
+  default = 16
   type    = number
 }
 
