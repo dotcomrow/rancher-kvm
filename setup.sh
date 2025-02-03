@@ -60,11 +60,11 @@ install_rke2() {
     echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
     
     # ssh -n $SSH_USER@$NODE_IP "sudo apt-get update -y && sudo apt-get install -y curl"
-    ssh -n $SSH_USER@$NODE "sudo mkdir -p /etc/rancher/rke2";
+    ssh -n $SSH_USER@$NODE_IP "sudo mkdir -p /etc/rancher/rke2";
     if [ ! -z "$RKE2_TOKEN" ]; then
-        ssh -n $SSH_USER@$NODE "echo 'token: $RKE2_TOKEN' | sudo tee /etc/rancher/rke2/config.yaml";
+        ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee /etc/rancher/rke2/config.yaml";
     fi
-    ssh -n $SSH_USER@$NODE "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
+    ssh -n $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
     # ssh -n $SSH_USER@$NODE_IP "sudo snap install kubectl --classic"
 
