@@ -101,10 +101,10 @@ copy_certs_and_trust() {
     ssh -n $SSH_USER@$NODE_IP "sudo cp /tmp/certs/* /etc/rancher/rke2/"
 
     # Ensure correct permissions
-    ssh $SSH_USER@$NODE_IP "sudo chmod 600 /etc/rancher/rke2/*"
+    ssh -n $SSH_USER@$NODE_IP "sudo chmod 600 /etc/rancher/rke2/*"
 
     # Add CA to Ubuntu's trust store
-    ssh $SSH_USER@$NODE_IP <<EOF
+    ssh -n $SSH_USER@$NODE_IP <<EOF
         sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt
         sudo update-ca-certificates
 EOF
