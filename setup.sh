@@ -104,10 +104,8 @@ copy_certs_and_trust() {
     ssh -n $SSH_USER@$NODE_IP "sudo chmod 600 /etc/rancher/rke2/*"
 
     # Add CA to Ubuntu's trust store
-    ssh -n $SSH_USER@$NODE_IP <<EOF
-        sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt
-        sudo update-ca-certificates
-EOF
+    ssh -n $SSH_USER@$NODE_IP "sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt"
+    ssh -n $SSH_USER@$NODE_IP "sudo update-ca-certificates"
 }
 
 # Function to install RKE2 on a node
@@ -217,9 +215,7 @@ echo "Rancher RKE2 Cluster setup completed!"
 
 # Step 5: Install Helm on the first server node
 echo "Installing Helm on the first server node..."
-ssh -n $SSH_USER@$RANCHER_MASTER <<EOF
-curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-EOF
+ssh -n $SSH_USER@$RANCHER_MASTER "curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
 
 # Step 6: Install Cert-Manager for Rancher
 echo "Installing Cert-Manager for TLS certificates..."
@@ -229,12 +225,10 @@ EOF
 
 # Step 7: Install Rancher via Helm
 echo "Deploying Rancher UI on RKE2 cluster..."
-ssh -n $SSH_USER@$RANCHER_MASTER <<EOF
-sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
-sudo helm repo update
-sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace cattle-system
-sudo helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=$RANCHER_DOMAIN --set bootstrapPassword=admin --kubeconfig /etc/rancher/rke2/rke2.yaml
-EOF
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace cattle-system"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=$RANCHER_DOMAIN --set bootstrapPassword=admin --kubeconfig /etc/rancher/rke2/rke2.yaml"
 
 # Step 8: Wait for Rancher to Deploy
 echo "Waiting for Rancher deployment to complete..."
@@ -242,9 +236,7 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rk
 
 # Verify installation
 echo "Verifying cluster and Rancher status..."
-ssh -n $SSH_USER@$RANCHER_MASTER <<EOF
-sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes
-sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n cattle-system
-EOF
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n cattle-system"
 
 echo "Rancher UI is now accessible at: https://$RANCHER_DOMAIN"
