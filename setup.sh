@@ -71,23 +71,84 @@ done
 
 # Rancher RKE2 Cluster Installation Script
 
+# Custom TLS Certificate Paths
+CUSTOM_CA_CERT="certs/ca.crt"
+CUSTOM_CA_KEY="certs/ca.key"
+CUSTOM_KUBE_CERT="certs/kube-apiserver.crt"
+CUSTOM_KUBE_KEY="certs/kube-apiserver.key"
+CUSTOM_ETCD_CERT="certs/etcd-server.crt"
+CUSTOM_ETCD_KEY="certs/etcd-server.key"
+CUSTOM_NODE_CERT="certs/node.crt"
+CUSTOM_NODE_KEY="certs/node.key"
+
+# Function to Copy Certificates to Nodes and Add CA to Trust Store
+copy_certs_and_trust() {
+    local NODE_IP=$1
+    echo "Copying certificates to $NODE_IP and adding CA to system trust store..."
+
+    # Copy certificates
+    scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:/etc/rancher/rke2/ca.crt
+    scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:/etc/rancher/rke2/ca.key
+    scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:/etc/rancher/rke2/kube-apiserver.crt
+    scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:/etc/rancher/rke2/kube-apiserver.key
+    scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:/etc/rancher/rke2/etcd-server.crt
+    scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:/etc/rancher/rke2/etcd-server.key
+    scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:/etc/rancher/rke2/node.crt
+    scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:/etc/rancher/rke2/node.key
+
+    # Ensure correct permissions
+    ssh $SSH_USER@$NODE_IP "sudo chmod 600 /etc/rancher/rke2/*"
+
+    # Add CA to Ubuntu's trust store
+    ssh $SSH_USER@$NODE_IP <<EOF
+        sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt
+        sudo update-ca-certificates
+EOF
+}
+
 # Function to install RKE2 on a node
 install_rke2() {
     local NODE_IP=$1
     local NODE_TYPE=$2
     echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
-    
-    ssh -n $SSH_USER@$NODE_IP "sudo mkdir -p /etc/rancher/rke2";
+
+    # Copy certificates to the node
+    copy_certs_and_trust  $NODE_IP
+
+    # Install RKE2
+    ssh $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
+
+    # Create custom RKE2 config with custom certificates
+    ssh $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
+tls-san:
+  - ${NODE_IP}
+  - ${RANCHER_DOMAIN}
+
+etcd:
+  peer-cert-file: /etc/rancher/rke2/etcd-server.crt
+  peer-key-file: /etc/rancher/rke2/etcd-server.key
+  trusted-ca-file: /etc/rancher/rke2/ca.crt
+
+kube-apiserver:
+  tls-cert-file: /etc/rancher/rke2/kube-apiserver.crt
+  tls-private-key-file: /etc/rancher/rke2/kube-apiserver.key
+
+tls:
+  cert-file: /etc/rancher/rke2/node.crt
+  key-file: /etc/rancher/rke2/node.key
+  ca-file: /etc/rancher/rke2/ca.crt
+EOF"
+
     if [ ! -z "$RKE2_TOKEN" ]; then
-        ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee /etc/rancher/rke2/config.yaml";
+        ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee -a /etc/rancher/rke2/config.yaml";
         ssh -n $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     fi
-    ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
-    
+
+    # Start RKE2
     if [[ "$NODE_TYPE" == "server" ]]; then
-        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service";
+        ssh $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server && sudo systemctl start rke2-server"
     else
-        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent.service && sudo systemctl start rke2-agent.service";
+        ssh $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent && sudo systemctl start rke2-agent"
     fi
 }
 
@@ -187,3 +248,16 @@ sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n cattle-system
 EOF
 
 echo "Rancher UI is now accessible at: https://$RANCHER_DOMAIN"
+
+
+
+
+
+
+
+sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml label crd bgpconfigurations.crd.projectcalico.org app.kubernetes.io/managed-by=Helm --overwrite
+sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml annotate crd bgpconfigurations.crd.projectcalico.org meta.helm.sh/release-name=rke2-canal --overwrite
+sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml annotate crd bgpconfigurations.crd.projectcalico.org meta.helm.sh/release-namespace=kube-system --overwrite
+
+
+sudo ETCDCTL_API=3 /var/lib/rancher/rke2/agent/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/2/fs/usr/local/bin/etcdctl --cacert=/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt --cert=/var/lib/rancher/rke2/server/tls/etcd/client.crt --key=/var/lib/rancher/rke2/server/tls/etcd/client.key --endpoints=https://127.0.0.1:2379 endpoint health
