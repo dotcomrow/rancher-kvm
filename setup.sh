@@ -219,9 +219,36 @@ ssh -n $SSH_USER@$RANCHER_MASTER "curl -fsSL https://raw.githubusercontent.com/h
 
 # Step 6: Install Cert-Manager for Rancher
 echo "Installing Cert-Manager for TLS certificates..."
-ssh -n $SSH_USER@$RANCHER_MASTER <<EOF
-sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
-EOF
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/cert-manager -n cert-manager"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/cert-manager-webhook -n cert-manager"
+
+echo "Cert-Manager installed successfully!"
+
+# installing metallb
+echo "Installing MetalLB..."
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.10/config/manifests/metallb-native.yaml"
+
+# Configuring MetalLB
+echo "Configuring MetalLB..."
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default
+  namespace: metallb-system
+spec:
+  addresses:
+  - 10.0.0.110-10.0.0.130  # Choose an unused IP range
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: default
+  namespace: metallb-system
+EOF"
+
 
 # Step 7: Install Rancher via Helm
 echo "Deploying Rancher UI on RKE2 cluster..."
@@ -240,3 +267,5 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rk
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n cattle-system"
 
 echo "Rancher UI is now accessible at: https://$RANCHER_DOMAIN"
+
+
