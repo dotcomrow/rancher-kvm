@@ -101,6 +101,28 @@ WORKER_NODE_PATTERN="work-node-"
 install_rke2 "$RANCHER_MASTER" "server";
 RKE2_TOKEN=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token");
 
+ssh $SSH_USER@$RANCHER_MASTER <<EOF
+    # Define ETCD certificate paths
+    ETCD_CA_CERT="/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt"
+    ETCD_CLIENT_CERT="/var/lib/rancher/rke2/server/tls/etcd/client.crt"
+    ETCD_CLIENT_KEY="/var/lib/rancher/rke2/server/tls/etcd/client.key"
+
+    # Check if ETCD CA certificate exists
+    if [ -f "\$ETCD_CA_CERT" ]; then
+        echo "ETCD CA certificate found. Adding to system trust store..."
+        
+        # Ubuntu/Debian
+        sudo cp "\$ETCD_CA_CERT" /usr/local/share/ca-certificates/etcd-server-ca.crt
+        sudo update-ca-certificates
+
+        echo "ETCD CA certificate successfully added to system trust store!"
+    else
+        echo "ETCD CA certificate NOT found! Skipping trust store update."
+    fi
+
+    sudo systemctl enable rke2-server.service && sudo systemctl start rke2-server.service
+EOF
+
 while IFS= read -r NODE; do
     if [ "$NODE" == "$RANCHER_MASTER" ]; then
         continue;
