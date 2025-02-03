@@ -52,17 +52,17 @@ variable "SRVR_NODE_COUNT" {
 }
 
 variable "SRVR_NODE_VCPU" {
-  default = 4
+  default = 2
   type    = number
 }
 
 variable "SRVR_NODE_MEMORY" {
-  default = "8192"
+  default = "16384"
   type    = string
 }
 
 variable "SRVR_VM_IMG_SIZE" {
-  default =  20 * 1024 * 1024 * 1024 # 20GiB.
+  default =  100 * 1024 * 1024 * 1024 # 100GiB.
   type    = string
 }
 
@@ -84,12 +84,12 @@ variable "ETCD_NODE_VCPU" {
 }
 
 variable "ETCD_NODE_MEMORY" {
-  default = "16384"
+  default = "32768"
   type    = string
 }
 
 variable "ETCD_VM_IMG_SIZE" {
-  default = 20 * 1024 * 1024 * 1024 # 20GiB.
+  default = 500 * 1024 * 1024 * 1024 # 500GiB.
   type    = string
 }
 
@@ -112,12 +112,12 @@ variable "CTRL_NODE_VCPU" {
 }
 
 variable "CTRL_NODE_MEMORY" {
-  default = "4096"
+  default = "49152"
   type    = string
 }
 
 variable "CTRL_VM_IMG_SIZE" {
-  default = 20 * 1024 * 1024 * 1024 # 20GiB.
+  default = 500 * 1024 * 1024 * 1024 # 500GiB.
   type    = string
 }
 
@@ -129,22 +129,22 @@ variable "WORK_NODE_HOSTNAME" {
 }
 
 variable "WORK_NODE_COUNT" {
-  default = 2
+  default = 3
   type    = number
 }
 
 variable "WORK_NODE_VCPU" {
-  default = 14
+  default = 10
   type    = number
 }
 
 variable "WORK_NODE_MEMORY" {
-  default = "102400"
+  default = "131072"
   type    = string
 }
 
 variable "WORK_VM_IMG_SIZE" {
-  default = 20 * 1024 * 1024 * 1024 # 20GiB.
+  default = 600 * 1024 * 1024 * 1024 # 600GiB.
   type    = string
 }
 
