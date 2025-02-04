@@ -33,7 +33,8 @@ SSH_USER="rancher"
 RANCHER_MASTER="srvr-node-00"
 
 # Rancher domain
-RANCHER_DOMAIN="rancher"
+RANCHER_HOSTNAME="rancher"
+RANCHER_DOMAIN="suncoast.systems"
 
 # Maximum number of retries
 MAX_RETRIES=10
@@ -161,7 +162,7 @@ install_rke2() {
     ssh -n $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
 tls-san:
   - ${NODE_IP}
-  - ${RANCHER_DOMAIN}
+  - ${RANCHER_HOSTNAME}
 
 etcd:
   peer-cert-file: /etc/rancher/rke2/etcd-server.crt
@@ -199,7 +200,6 @@ CONTROL_NODE_PATTERN="ctrl-node-"
 WORKER_NODE_PATTERN="work-node-"
 
 install_rke2 "$RANCHER_MASTER" "server";
-# ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://docs.projectcalico.org/manifests/calico.yaml";
 RKE2_TOKEN=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token");
 
 while IFS= read -r NODE; do
@@ -299,7 +299,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-  - 10.0.0.110-10.0.0.130  # Choose an unused IP range
+  - 10.0.0.110-10.0.0.150  # Choose an unused IP range
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
@@ -314,7 +314,7 @@ echo "Deploying Rancher UI on RKE2 cluster..."
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace cattle-system"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=$RANCHER_DOMAIN --set bootstrapPassword=admin --kubeconfig /etc/rancher/rke2/rke2.yaml"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=$RANCHER_HOSTNAME --set bootstrapPassword=admin --kubeconfig /etc/rancher/rke2/rke2.yaml"
 
 # Step 8: Wait for Rancher to Deploy
 echo "Waiting for Rancher deployment to complete..."
@@ -331,7 +331,56 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rk
 echo "Adding Longhorn storage..."
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml"
 
-echo "Rancher UI is now accessible at: https://$RANCHER_DOMAIN"
 echo "Bootstrap password is:"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get secret --namespace cattle-system bootstrap-secret -o go-template='{{.data.bootstrapPassword|base64decode}}{{ \"\n\" }}'"
 
+# Add kubernetes-dashboard repository
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/"
+# Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-web -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubernetes-dashboard-settings
+  namespace: kubernetes-dashboard
+data:
+  # Enable OIDC Authentication
+  enable-insecure-login: false
+  authentication-mode: oidc
+  oidc-client-id: kubernetes-dashboard
+  oidc-client-secret: <REPLACE_WITH_CLIENT_SECRET>
+  oidc-issuer-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/v3/oidc
+  oidc-redirect-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/oauth2/callback
+  oidc-scopes: openid profile email groups
+  oidc-extra-params: prompt=consent
+"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard kubernetes-dashboard"
+
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+EOF"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n kubernetes-dashboard create token admin-user"
