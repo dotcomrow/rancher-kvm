@@ -76,7 +76,8 @@ CUSTOM_ETCD_KEY="certs/etcd-server.key"
 CUSTOM_NODE_CERT="certs/node.crt"
 CUSTOM_NODE_KEY="certs/node.key"
 
-# Function to Copy Certificates to Nodes and Add CA to Trust Storecopy_certs_and_trust() {
+# Function to Copy Certificates to Nodes and Add CA to Trust Store
+copy_certs_and_trust() {
     local NODE_IP=$1
     echo "📜 Copying certificates to $NODE_IP and adding CA to system trust store..."
 
