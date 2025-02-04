@@ -70,22 +70,22 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     # 1️⃣ Securely transfer known_hosts and verify
     execute_with_retry \
         "scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts" \
-        "ssh -n $SSH_USER@$vm_name 'test -f ~/.ssh/known_hosts'"
+        "ssh -n $SSH_USER@$vm_name 'sudo test -f ~/.ssh/known_hosts'"
 
     # 2️⃣ Securely transfer /etc/hosts and verify
     execute_with_retry \
         "scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts" \
-        "ssh -n $SSH_USER@$vm_name 'test -f /tmp/hosts'"
+        "ssh -n $SSH_USER@$vm_name 'sudo test -f /tmp/hosts'"
 
     # 3️⃣ Move /tmp/hosts to /etc/hosts and verify
     execute_with_retry \
         "ssh -n $SSH_USER@$vm_name 'sudo cp /tmp/hosts /etc/hosts'" \
-        "ssh -n $SSH_USER@$vm_name 'test -f /etc/hosts'"
+        "ssh -n $SSH_USER@$vm_name 'sudo test -f /etc/hosts'"
 
     # 4️⃣ Copy known_hosts to root's SSH directory and verify
     execute_with_retry \
         "ssh -n $SSH_USER@$vm_name 'sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts'" \
-        "ssh -n $SSH_USER@$vm_name 'test -f /root/.ssh/known_hosts'"
+        "ssh -n $SSH_USER@$vm_name 'sudo test -f /root/.ssh/known_hosts'"
 
     echo "All operations completed on node $vm_name."
 done
