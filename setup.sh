@@ -345,23 +345,46 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboa
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-web -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml"
 
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kubernetes-dashboard-settings
-  namespace: kubernetes-dashboard
-data:
-  # Enable OIDC Authentication
-  enable-insecure-login: false
-  authentication-mode: oidc
-  oidc-client-id: kubernetes-dashboard
-  oidc-client-secret: <REPLACE_WITH_CLIENT_SECRET>
-  oidc-issuer-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/v3/oidc
-  oidc-redirect-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/oauth2/callback
-  oidc-scopes: openid profile email groups
-  oidc-extra-params: prompt=consent
-EOF"
+# ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: kubernetes-dashboard
+#   namespace: kubernetes-dashboard
+#   annotations:
+#     konghq.com/protocols: https
+# spec:
+#   ingressClassName: kong
+#   rules:
+#     - host: dashboard.$RANCHER_DOMAIN
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: kubernetes-dashboard-web
+#                 port:
+#                   number: 8000
+# EOF"
+
+# ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: kubernetes-dashboard-settings
+#   namespace: kubernetes-dashboard
+# data:
+#   # Enable OIDC Authentication
+#   enable-insecure-login: 'false'
+#   authentication-mode: oidc
+#   oidc-client-id: 
+#   oidc-client-secret: 
+#   oidc-issuer-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/v3/oidc
+#   oidc-redirect-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/oauth2/callback
+#   oidc-scopes: openid profile email groups
+#   oidc-extra-params: prompt=consent
+# EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard kubernetes-dashboard"
 
