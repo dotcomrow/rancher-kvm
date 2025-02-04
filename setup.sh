@@ -87,47 +87,47 @@ copy_certs_and_trust() {
     local NODE_IP=$1
     echo "📜 Copying certificates to $NODE_IP and adding CA to system trust store..."
 
-    execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'mkdir -p /tmp/certs'" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -d /tmp/certs'"
-
     # Copy certificates with verification
     execute_with_retry \
-        "scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:/tmp/certs/ca.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/ca.crt'"
+        "scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:~/ca.crt" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/ca.crt'"
 
     execute_with_retry \
-        "scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:/tmp/certs/ca.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/ca.key'"
+        "scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:~/ca.key" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/ca.key'"
 
     execute_with_retry \
-        "scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:/tmp/certs/kube-apiserver.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/kube-apiserver.crt'"
+        "scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:~/kube-apiserver.crt" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/kube-apiserver.crt'"
 
     execute_with_retry \
-        "scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:/tmp/certs/kube-apiserver.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/kube-apiserver.key'"
+        "scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:~/kube-apiserver.key" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/kube-apiserver.key'"
 
     execute_with_retry \
-        "scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:/tmp/certs/etcd-server.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/etcd-server.crt'"
+        "scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:~/etcd-server.crt" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/etcd-server.crt'"
 
     execute_with_retry \
-        "scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:/tmp/certs/etcd-server.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/etcd-server.key'"
+        "scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:~/etcd-server.key" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/etcd-server.key'"
 
     execute_with_retry \
-        "scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:/tmp/certs/node.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/node.crt'"
+        "scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:~/node.crt" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/node.crt'"
 
     execute_with_retry \
-        "scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:/tmp/certs/node.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/node.key'"
+        "scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:~/node.key" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/node.key'"
 
     # Move certificates to RKE2 directory
     execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo cp /tmp/certs/* /etc/rancher/rke2/'" \
+        "ssh -n $SSH_USER@$NODE_IP 'sudo cp ~/*.cert /etc/rancher/rke2/'" \
         "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.crt'"
+
+    execute_with_retry \
+        "ssh -n $SSH_USER@$NODE_IP 'sudo cp ~/*.key /etc/rancher/rke2/'" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.key'"
 
     # Ensure correct permissions
     execute_with_retry \
