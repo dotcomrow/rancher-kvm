@@ -48,7 +48,7 @@ execute_with_retry() {
     local retries=$MAX_RETRIES  # Number of retries
     local delay=$RETRY_DELAY    # Delay between retries in seconds
     local count=0
- local timeout=15 # Timeout in seconds for SCP
+    local timeout=15 # Timeout in seconds for SCP
 
     for ((count=1; count<=retries; count++)); do
         echo "Executing: $cmd"
