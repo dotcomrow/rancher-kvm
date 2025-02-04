@@ -17,9 +17,6 @@ virsh list --all | grep running
 echo "Shutting down VMs..."
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     virsh shutdown $vm_name
-
-    # remove host entries from hosts file
-    sudo hostsed drop $vm_name
 done
 
 # Wait for VMs to shutdown (optional)
