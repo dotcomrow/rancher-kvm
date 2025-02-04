@@ -19,8 +19,6 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     while ! grep -q "ens3" <(virsh domifaddr $vm_name --source agent 2>&1); do
         sleep 1;
     done
-    # IP=$(virsh domifaddr $vm_name --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1);
-    # sudo hostsed add $IP $vm_name;
     ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
 
@@ -72,32 +70,6 @@ execute_with_retry() {
     return 1  # Indicate failure
 }
 
-
-# virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
-#     # 1️⃣ Securely transfer known_hosts and verify
-#     execute_with_retry \
-#         "scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts" \
-#         "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f ~/.ssh/known_hosts'"
-
-#     # 2️⃣ Securely transfer /etc/hosts and verify
-#     execute_with_retry \
-#         "scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts" \
-#         "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /tmp/hosts'"
-
-#     # 3️⃣ Move /tmp/hosts to /etc/hosts and verify
-#     execute_with_retry \
-#         "ssh -n $SSH_USER@$vm_name 'sudo cp /tmp/hosts /etc/hosts'" \
-#         "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /etc/hosts'"
-
-#     # 4️⃣ Copy known_hosts to root's SSH directory and verify
-#     execute_with_retry \
-#         "ssh -n $SSH_USER@$vm_name 'sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts'" \
-#         "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /root/.ssh/known_hosts'"
-
-#     echo "All operations completed on node $vm_name."
-# done
-
-
 # Rancher RKE2 Cluster Installation Script
 
 # Custom TLS Certificate Paths
@@ -110,31 +82,65 @@ CUSTOM_ETCD_KEY="certs/etcd-server.key"
 CUSTOM_NODE_CERT="certs/node.crt"
 CUSTOM_NODE_KEY="certs/node.key"
 
-# Function to Copy Certificates to Nodes and Add CA to Trust Store
-copy_certs_and_trust() {
+# Function to Copy Certificates to Nodes and Add CA to Trust Storecopy_certs_and_trust() {
     local NODE_IP=$1
-    echo "Copying certificates to $NODE_IP and adding CA to system trust store..."
+    echo "📜 Copying certificates to $NODE_IP and adding CA to system trust store..."
 
-    ssh -n $SSH_USER@$NODE_IP "mkdir -p /tmp/certs"
+    execute_with_retry \
+        "ssh -n $SSH_USER@$NODE_IP 'mkdir -p /tmp/certs'" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -d /tmp/certs'"
 
-    # Copy certificates
-    scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:/tmp/certs/ca.crt
-    scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:/tmp/certs/ca.key
-    scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:/tmp/certs/kube-apiserver.crt
-    scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:/tmp/certs/kube-apiserver.key
-    scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:/tmp/certs/etcd-server.crt
-    scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:/tmp/certs/etcd-server.key
-    scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:/tmp/certs/node.crt
-    scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:/tmp/certs/node.key
+    # Copy certificates with verification
+    execute_with_retry \
+        "scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:/tmp/certs/ca.crt" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/ca.crt'"
 
-    ssh -n $SSH_USER@$NODE_IP "sudo cp /tmp/certs/* /etc/rancher/rke2/"
+    execute_with_retry \
+        "scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:/tmp/certs/ca.key" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/ca.key'"
+
+    execute_with_retry \
+        "scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:/tmp/certs/kube-apiserver.crt" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/kube-apiserver.crt'"
+
+    execute_with_retry \
+        "scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:/tmp/certs/kube-apiserver.key" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/kube-apiserver.key'"
+
+    execute_with_retry \
+        "scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:/tmp/certs/etcd-server.crt" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/etcd-server.crt'"
+
+    execute_with_retry \
+        "scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:/tmp/certs/etcd-server.key" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/etcd-server.key'"
+
+    execute_with_retry \
+        "scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:/tmp/certs/node.crt" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/node.crt'"
+
+    execute_with_retry \
+        "scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:/tmp/certs/node.key" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /tmp/certs/node.key'"
+
+    # Move certificates to RKE2 directory
+    execute_with_retry \
+        "ssh -n $SSH_USER@$NODE_IP 'sudo cp /tmp/certs/* /etc/rancher/rke2/'" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.crt'"
 
     # Ensure correct permissions
-    ssh -n $SSH_USER@$NODE_IP "sudo chmod 600 /etc/rancher/rke2/*"
+    execute_with_retry \
+        "ssh -n $SSH_USER@$NODE_IP 'sudo chmod 600 /etc/rancher/rke2/*'" \
+        "ssh -n $SSH_USER@$NODE_IP 'ls -l /etc/rancher/rke2/'"
 
     # Add CA to Ubuntu's trust store
-    ssh -n $SSH_USER@$NODE_IP "sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt"
-    ssh -n $SSH_USER@$NODE_IP "sudo update-ca-certificates"
+    execute_with_retry \
+        "ssh -n $SSH_USER@$NODE_IP 'sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt'" \
+        "ssh -n $SSH_USER@$NODE_IP 'test -f /usr/local/share/ca-certificates/custom-ca.crt'"
+
+    execute_with_retry \
+        "ssh -n $SSH_USER@$NODE_IP 'sudo update-ca-certificates'" \
+        "ssh -n $SSH_USER@$NODE_IP 'ls /etc/ssl/certs | grep custom-ca.crt'"
 }
 
 # Function to install RKE2 on a node
@@ -144,8 +150,7 @@ install_rke2() {
     echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
 
     ssh -n $SSH_USER@$NODE_IP "sudo mkdir -p /etc/rancher/rke2";
-
-    # Copy certificates to the node
+    
     copy_certs_and_trust  $NODE_IP
 
     # Install RKE2
