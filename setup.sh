@@ -19,8 +19,8 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     while ! grep -q "ens3" <(virsh domifaddr $vm_name --source agent 2>&1); do
         sleep 1;
     done
-    IP=$(virsh domifaddr $vm_name --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1);
-    sudo hostsed add $IP $vm_name;
+    # IP=$(virsh domifaddr $vm_name --source agent | grep ens3 | awk '{print $4}' | cut -d "/" -f 1);
+    # sudo hostsed add $IP $vm_name;
     ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
 
@@ -73,29 +73,29 @@ execute_with_retry() {
 }
 
 
-virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
-    # 1️⃣ Securely transfer known_hosts and verify
-    execute_with_retry \
-        "scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts" \
-        "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f ~/.ssh/known_hosts'"
+# virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
+#     # 1️⃣ Securely transfer known_hosts and verify
+#     execute_with_retry \
+#         "scp ~/.ssh/known_hosts $SSH_USER@$vm_name:~/.ssh/known_hosts" \
+#         "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f ~/.ssh/known_hosts'"
 
-    # 2️⃣ Securely transfer /etc/hosts and verify
-    execute_with_retry \
-        "scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts" \
-        "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /tmp/hosts'"
+#     # 2️⃣ Securely transfer /etc/hosts and verify
+#     execute_with_retry \
+#         "scp /etc/hosts $SSH_USER@$vm_name:/tmp/hosts" \
+#         "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /tmp/hosts'"
 
-    # 3️⃣ Move /tmp/hosts to /etc/hosts and verify
-    execute_with_retry \
-        "ssh -n $SSH_USER@$vm_name 'sudo cp /tmp/hosts /etc/hosts'" \
-        "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /etc/hosts'"
+#     # 3️⃣ Move /tmp/hosts to /etc/hosts and verify
+#     execute_with_retry \
+#         "ssh -n $SSH_USER@$vm_name 'sudo cp /tmp/hosts /etc/hosts'" \
+#         "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /etc/hosts'"
 
-    # 4️⃣ Copy known_hosts to root's SSH directory and verify
-    execute_with_retry \
-        "ssh -n $SSH_USER@$vm_name 'sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts'" \
-        "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /root/.ssh/known_hosts'"
+#     # 4️⃣ Copy known_hosts to root's SSH directory and verify
+#     execute_with_retry \
+#         "ssh -n $SSH_USER@$vm_name 'sudo cp ~/.ssh/known_hosts /root/.ssh/known_hosts'" \
+#         "ssh -n -tt $SSH_USER@$vm_name 'sudo test -f /root/.ssh/known_hosts'"
 
-    echo "All operations completed on node $vm_name."
-done
+#     echo "All operations completed on node $vm_name."
+# done
 
 
 # Rancher RKE2 Cluster Installation Script
