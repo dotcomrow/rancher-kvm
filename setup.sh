@@ -127,11 +127,11 @@ copy_certs_and_trust() {
 
     # Move certificates to RKE2 directory
     execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo cp ~/*.crt /etc/rancher/rke2/'" \
+        "ssh -n $SSH_USER@$NODE_IP 'sudo mkdir -p /etc/rancher/rke2' && sudo cp ~/*.crt /etc/rancher/rke2/'" \
         "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.crt'"
 
     execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo cp ~/*.key /etc/rancher/rke2/'" \
+        "ssh -n $SSH_USER@$NODE_IP 'sudo mkdir -p /etc/rancher/rke2' && sudo cp ~/*.key /etc/rancher/rke2/'" \
         "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.key'"
 
     # Ensure correct permissions
