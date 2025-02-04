@@ -141,7 +141,7 @@ copy_certs_and_trust() {
 
     execute_with_retry \
         "ssh -n $SSH_USER@$NODE_IP 'sudo update-ca-certificates'" \
-        "ssh -n $SSH_USER@$NODE_IP 'ls /etc/ssl/certs | grep custom-ca.crt'"
+        "ssh -n $SSH_USER@$NODE_IP 'ls -al /etc/ssl/certs | grep custom-ca.crt'"
 }
 
 # Function to install RKE2 on a node
