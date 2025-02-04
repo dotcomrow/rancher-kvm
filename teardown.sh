@@ -28,3 +28,5 @@ done
 echo "All VMs shutdown."
 
 terraform destroy --auto-approve
+
+resolvectl flush-caches

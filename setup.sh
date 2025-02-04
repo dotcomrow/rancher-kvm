@@ -12,6 +12,8 @@ exec 1>/tmp/rks2-setup.log 2>&1
 terraform init
 terraform apply --auto-approve
 
+resolvectl flush-caches
+
 rm -rf ~/.ssh/known_hosts
 
 # iterate over machines and add host entries to hosts file using qemu guest agent
