@@ -48,17 +48,24 @@ execute_with_retry() {
     local retries=$MAX_RETRIES  # Number of retries
     local delay=$RETRY_DELAY    # Delay between retries in seconds
     local count=0
+ local timeout=15 # Timeout in seconds for SCP
 
-    while [ $count -lt $retries ]; do
+    for ((count=1; count<=retries; count++)); do
         echo "Executing: $cmd"
-        eval "$cmd"
 
-        echo "Verifying: $verify_cmd"
-        eval "$verify_cmd" && return 0  # If verification succeeds, exit function
+        # Run command with timeout protection
+        timeout "$timeout" bash -c "$cmd" && {
+            echo "✅ Command succeeded"
+            
+            # Verify the file exists
+            echo "Verifying: $verify_cmd"
+            eval "$verify_cmd" && return 0
 
-        count=$((count + 1))
-        echo "Retry $count/$retries failed, retrying in $delay seconds..."
-        sleep $delay
+            echo "❌ Verification failed, retrying..."
+        }
+
+        echo "⚠️ Retry $count/$retries failed, retrying in $delay seconds..."
+        sleep "$delay"
     done
 
     echo "❌ ERROR: Command failed after $retries attempts: $cmd"
