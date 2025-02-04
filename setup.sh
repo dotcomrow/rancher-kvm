@@ -9,8 +9,6 @@ fi
 rm -rf /tmp/rks2-setup.log
 exec 1>/tmp/rks2-setup.log 2>&1
 
-resolvectl flush-caches
-
 terraform init
 terraform apply --auto-approve
 
