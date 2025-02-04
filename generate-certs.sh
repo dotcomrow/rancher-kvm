@@ -2,6 +2,7 @@
 
 # Directory to store generated certificates
 CERT_DIR="./certs"
+rm -rf "$CERT_DIR"
 mkdir -p "$CERT_DIR"
 
 # Certificate Details
