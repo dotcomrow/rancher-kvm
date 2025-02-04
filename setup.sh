@@ -252,10 +252,27 @@ echo "Installing MetalLB..."
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.10/config/manifests/metallb-native.yaml"
 
 echo "Waiting for MetalLB Webhook Service to be ready..."
-while [[ $(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get endpoints -n metallb-system webhook-service -o jsonpath='{.subsets}'") == "" ]]; do
-  echo "MetalLB Webhook not ready yet, retrying in 5 seconds..."
-  sleep 5
+
+echo "🔄 Waiting for MetalLB to be fully ready..."
+
+while true; do
+    echo "Checking MetalLB components..."
+
+    # Check if all MetalLB pods are running
+    PODS_READY=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n metallb-system --no-headers | grep -E 'controller|speaker|webhook-service' | awk '{print \$3}' | grep -v Running | wc -l")
+    
+    # Check if webhook-service has endpoints
+    WEBHOOK_READY=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get endpoints -n metallb-system webhook-service -o jsonpath='{.subsets}' | grep -Eo 'addresses' | wc -l")
+    
+    if [[ "$PODS_READY" -eq 0 && "$WEBHOOK_READY" -gt 0 ]]; then
+        echo "✅ MetalLB is fully ready!"
+        break
+    fi
+
+    echo "⏳ MetalLB is not ready yet, retrying in 5 seconds..."
+    sleep 5
 done
+
 echo "✅ MetalLB Webhook is ready!"
 
 # Configuring MetalLB
