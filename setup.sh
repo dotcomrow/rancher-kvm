@@ -22,6 +22,8 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
 
+# generate certs
+./generate-certs.sh
 
 # Rancher Version
 RKE2_VERSION="v1.31.3+rke2r1"
