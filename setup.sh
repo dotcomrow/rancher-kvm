@@ -24,6 +24,7 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
 
+CERT_DIR="certs"
 EXPECTED_CERTS=(
     "$CERT_DIR/ca.crt"
     "$CERT_DIR/ca.key"
