@@ -370,6 +370,7 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rk
 # configure github oidc
 # Load GitHub OAuth credentials from config file
 CONFIG_FILE="~/github-auth.conf"
+CONFIG_FILE=$(eval echo "$CONFIG_FILE")
 
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "❌ ERROR: Config file $CONFIG_FILE not found!"
