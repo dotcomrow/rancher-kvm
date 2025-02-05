@@ -275,6 +275,30 @@ echo "Rancher RKE2 Cluster setup completed!"
 
 # Step 5: Install Helm on the first server node
 echo "Installing Helm on the first server node..."
+ATTEMPT=1
+
+while [ $ATTEMPT -le $MAX_RETRIES ]; do
+    echo "🔄 Attempt $ATTEMPT: Installing Helm on Rancher Master..."
+
+    ssh -n $SSH_USER@$RANCHER_MASTER "curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
+
+    # Verify Helm installation
+    echo "🔍 Verifying Helm installation..."
+    HELM_CHECK=$(ssh -n $SSH_USER@$RANCHER_MASTER "command -v helm")
+
+    if [ -n "$HELM_CHECK" ]; then
+        echo "✅ Helm successfully installed on $RANCHER_MASTER!"
+        exit 0
+    else
+        echo "❌ Helm installation failed. Retrying in $RETRY_DELAY seconds..."
+        sleep $RETRY_DELAY
+        ((ATTEMPT++))
+    fi
+done
+
+echo "❌ ERROR: Helm installation failed after $MAX_RETRIES attempts."
+exit 1
+
 ssh -n $SSH_USER@$RANCHER_MASTER "curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
 
 # Step 6: Install Cert-Manager for Rancher
