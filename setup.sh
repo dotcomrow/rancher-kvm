@@ -164,6 +164,9 @@ install_rke2() {
 
     # Create custom RKE2 config with custom certificates
     ssh -n $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
+cluster-domain: $RANCHER_DOMAIN
+cluster-name: k8s-cluster
+
 tls-san:
   - ${NODE_IP}
   - ${RANCHER_HOSTNAME}
