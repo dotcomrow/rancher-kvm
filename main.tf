@@ -52,7 +52,7 @@ variable "SRVR_NODE_COUNT" {
 }
 
 variable "SRVR_NODE_VCPU" {
-  default = 2
+  default = 4
   type    = number
 }
 
@@ -129,17 +129,17 @@ variable "WORK_NODE_HOSTNAME" {
 }
 
 variable "WORK_NODE_COUNT" {
-  default = 3
+  default = 2
   type    = number
 }
 
 variable "WORK_NODE_VCPU" {
-  default = 10
+  default = 14
   type    = number
 }
 
 variable "WORK_NODE_MEMORY" {
-  default = "131072"
+  default = "196608"
   type    = string
 }
 
