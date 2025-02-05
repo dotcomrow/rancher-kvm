@@ -129,22 +129,22 @@ variable "WORK_NODE_HOSTNAME" {
 }
 
 variable "WORK_NODE_COUNT" {
-  default = 2
+  default = 1
   type    = number
 }
 
 variable "WORK_NODE_VCPU" {
-  default = 14
+  default = 28
   type    = number
 }
 
 variable "WORK_NODE_MEMORY" {
-  default = "196608"
+  default = "393216"
   type    = string
 }
 
 variable "WORK_VM_IMG_SIZE" {
-  default = 900 * 1024 * 1024 * 1024 # 900GiB.
+  default = 1800 * 1024 * 1024 * 1024 # 1800GiB.
   type    = string
 }
 
