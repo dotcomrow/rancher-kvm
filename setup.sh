@@ -58,13 +58,14 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
         sleep 1;
     done
     echo "Waiting for SSH..."
-
+    execute_with_retry "ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "ssh -n $SSH_USER@$vm_name 'echo $vm_name'"
+    
     execute_with_retry \
         "ssh -n $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
         "ssh -n $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
 
     echo "Adding host entry for $vm_name"
-    ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
+    
 done
 
 CERT_DIR="certs"
