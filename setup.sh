@@ -21,7 +21,7 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     while ! grep -q "ens3" <(virsh domifaddr $vm_name --source agent 2>&1); do
         sleep 1;
     done
-    ssh -n $SSH_USER@$vm_name "until [ -f /tmp/fin ]; do sleep 1; done";
+    ssh -n $SSH_USER@$vm_name "until [ -f /home/$SSH_USER/fin ]; do sleep 1; done";
     ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
 
