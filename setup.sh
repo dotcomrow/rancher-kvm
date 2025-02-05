@@ -213,7 +213,9 @@ tls:
   ca-file: /etc/rancher/rke2/ca.crt
 EOF"
 
+    echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
     if [ ! -z "$RKE2_TOKEN" ]; then
+        echo "Using RKE2 token: $RKE2_TOKEN"
         ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee -a /etc/rancher/rke2/config.yaml";
         ssh -n $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     fi
