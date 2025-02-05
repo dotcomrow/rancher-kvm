@@ -414,7 +414,7 @@ metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: 'true'
 provisioner: driver.longhorn.io
-allowVolumeExpansion: 'true'
+allowVolumeExpansion: true
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 parameters:
@@ -426,7 +426,7 @@ kind: StorageClass
 metadata:
   name: longhorn-rwx
 provisioner: driver.longhorn.io
-allowVolumeExpansion: 'true'
+allowVolumeExpansion: true
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 parameters:
