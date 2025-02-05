@@ -419,3 +419,41 @@ subjects:
 EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n kubernetes-dashboard create token admin-user"
+
+# create longhorn storage classes
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn
+  annotations:
+    storageclass.kubernetes.io/is-default-class: 'true'
+provisioner: driver.longhorn.io
+allowVolumeExpansion: 'true'
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: '1'  # Adjust based on available nodes
+  staleReplicaTimeout: '30'
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-rwx
+provisioner: driver.longhorn.io
+allowVolumeExpansion: 'true'
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: '1'
+  staleReplicaTimeout: '30'
+  fromBackup: ''  # Optional: Restore from backup if needed
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ephemeral-fast
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+EOF"
