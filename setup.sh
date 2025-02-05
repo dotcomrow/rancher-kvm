@@ -366,6 +366,68 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboa
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml"
 
+# configure github oidc
+# Load GitHub OAuth credentials from config file
+CONFIG_FILE="~/github-auth.conf"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "❌ ERROR: Config file $CONFIG_FILE not found!"
+    exit 1
+fi
+
+# Read values from the config file
+source "$CONFIG_FILE"
+
+# Ensure required variables are set
+if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_ORG" ]]; then
+    echo "❌ ERROR: Missing required variables in $CONFIG_FILE!"
+    exit 1
+fi
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: management.cattle.io/v3
+kind: AuthConfig
+metadata:
+  name: github
+  namespace: cattle-system
+enabled: true
+displayName: 'GitHub Authentication'
+clientId: '$GITHUB_CLIENT_ID'
+clientSecret: '$GITHUB_CLIENT_SECRET'
+hostname: 'github.com'
+rancherUrl: 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN'
+allowedPrincipalIds:
+  - 'github_org:$GITHUB_ORG'  # Restrict access to a GitHub org 
+scopes:
+  - 'read:user'
+  - 'user:email'
+  - 'read:org'
+EOF"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment rancher -n cattle-system"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: management.cattle.io/v3
+kind: OIDCClient
+metadata:
+  name: kubernetes-dashboard
+  namespace: cattle-system
+spec:
+  displayName: 'Kubernetes Dashboard OIDC Client'
+  allowedPrincipalIds: []  # Restrict access if needed, leave empty for all Rancher users
+  redirectURIs:
+    - 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/oauth2/callback'
+  scopes:
+    - 'openid'
+    - 'profile'
+    - 'email'
+    - 'groups'
+EOF"
+
+OIDC_CLIENT=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get oidcclient -n cattle-system kubernetes-dashboard -o jsonpath=\"{.spec.clientID}\"")
+OIDC_SECRET=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get secret -n cattle-system kubernetes-dashboard -o jsonpath=\"{.data.clientSecret}\" | base64 --decode")
+
+# configure oidc for kubernetes-dashboard
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: v1
 kind: ConfigMap
@@ -376,8 +438,8 @@ data:
   # Enable OIDC Authentication
   enable-insecure-login: 'false'
   authentication-mode: oidc
-  oidc-client-id: 123
-  oidc-client-secret: 123
+  oidc-client-id: $OIDC_CLIENT
+  oidc-client-secret: $OIDC_SECRET
   oidc-issuer-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/v3/oidc
   oidc-redirect-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/oauth2/callback
   oidc-scopes: openid profile email groups
