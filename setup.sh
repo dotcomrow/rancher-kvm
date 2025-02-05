@@ -55,9 +55,6 @@ verify_certs() {
 
 verify_certs || exit 1
 
-# Rancher Version
-RKE2_VERSION="v1.31.3+rke2r1"
-
 # SSH User
 SSH_USER="rancher"
 
@@ -220,9 +217,6 @@ EOF"
         ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee -a /etc/rancher/rke2/config.yaml";
         ssh -n $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     fi
-
-    # Install RKE2
-    ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
 
     # Start RKE2
     if [[ "$NODE_TYPE" == "server" ]]; then

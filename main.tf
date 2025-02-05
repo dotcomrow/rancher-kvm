@@ -4,6 +4,11 @@
 
 ## Gloabl
 
+variable "K8S_VERSION" {
+  default = "v1.31.3+rke2r1"
+  type    = string
+}
+
 variable "VM_USER" {
   default = "rancher"
   type    = string
@@ -170,6 +175,7 @@ data "template_file" "user_data_srvr" {
   vars = {
     VM_USER = var.VM_USER
     HOSTNAME = format("${var.SRVR_NODE_HOSTNAME}-%02s", count.index)
+    K8S_VERSION = var.K8S_VERSION
   }
 }
 
@@ -179,6 +185,7 @@ data "template_file" "user_data_work" {
   vars = {
     VM_USER = var.VM_USER
     HOSTNAME = format("${var.WORK_NODE_HOSTNAME}-%02s", count.index)
+    K8S_VERSION = var.K8S_VERSION
   }
 }
 
@@ -188,6 +195,7 @@ data "template_file" "user_data_etcd" {
   vars = {
     VM_USER = var.VM_USER
     HOSTNAME = format("${var.ETCD_NODE_HOSTNAME}-%02s", count.index)
+    K8S_VERSION = var.K8S_VERSION
   }
 }
 
@@ -197,6 +205,7 @@ data "template_file" "user_data_ctrl" {
   vars = {
     VM_USER = var.VM_USER
     HOSTNAME = format("${var.CTRL_NODE_HOSTNAME}-%02s", count.index)
+    K8S_VERSION = var.K8S_VERSION
   }
 }
 
