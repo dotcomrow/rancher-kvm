@@ -1,45 +1,50 @@
 #!/bin/bash
 
-# Directory to store generated certificates
+# Configurable Variables
+DOMAIN="k8s.suncoast.systems"
+EMAIL="administrator@suncoast.systems"
+CERTBOT_CERT_DIR="/etc/letsencrypt/live/$DOMAIN"
 CERT_DIR="./certs"
 rm -rf "$CERT_DIR"
 mkdir -p "$CERT_DIR"
 
-# Certificate Details
-COUNTRY="US"
-STATE="Florida"
-LOCALITY="Clearwater"
-ORG="SuncoastSystemsRKE"
-OU="IT Department"
-CA_CN="RKE2-Root-CA"
+# Install Certbot & Cloudflare Plugin if Not Installed
+if ! command -v certbot &> /dev/null; then
+    echo "🔧 Installing Certbot..."
+    sudo apt update && sudo apt install -y certbot python3-certbot-dns-cloudflare
+fi
 
-# Generate Root CA
-echo "🔹 Generating Root CA..."
-openssl req -x509 -nodes -newkey rsa:4096 -days 3650 -keyout "$CERT_DIR/ca.key" -out "$CERT_DIR/ca.crt" -subj "/C=$COUNTRY/ST=$STATE/L=$LOCALITY/O=$ORG/OU=$OU/CN=$CA_CN"
+# Request Let's Encrypt Certificate Using DNS-01
+echo "🔑 Requesting Let's Encrypt certificate for $DOMAIN using DNS-01 challenge..."
+sudo certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/cloudflare.ini \
+  -d "$DOMAIN" -d "*.$DOMAIN" --email "$EMAIL" --agree-tos --non-interactive --expand
 
-# Function to Generate Certificates
-generate_cert() {
+# Verify if certificates were generated
+if [ ! -f "$CERTBOT_CERT_DIR/fullchain.pem" ] || [ ! -f "$CERTBOT_CERT_DIR/privkey.pem" ]; then
+    echo "❌ ERROR: Let's Encrypt certificate generation failed!"
+    exit 1
+fi
+
+# Copy Certificates to Working Directory
+echo "📦 Copying certificates to $CERT_DIR..."
+sudo cp "$CERTBOT_CERT_DIR/fullchain.pem" "$CERT_DIR/ca.crt"
+sudo cp "$CERTBOT_CERT_DIR/privkey.pem" "$CERT_DIR/ca.key"
+sudo chmod 600 "$CERT_DIR/ca."*
+
+# Function to Copy and Rename Certificates for ETCD, Kube-API, and Nodes
+generate_cert_links() {
     local NAME=$1
-    local CN=$2
-    echo "🔹 Generating $NAME certificate..."
-    
-    # Generate Private Key
-    openssl genrsa -out "$CERT_DIR/$NAME.key" 4096
-    
-    # Create Certificate Signing Request (CSR)
-    openssl req -new -key "$CERT_DIR/$NAME.key" -out "$CERT_DIR/$NAME.csr" -subj "/C=$COUNTRY/ST=$STATE/L=$LOCALITY/O=$ORG/OU=$OU/CN=$CN"
-    
-    # Sign Certificate with Root CA
-    openssl x509 -req -in "$CERT_DIR/$NAME.csr" -CA "$CERT_DIR/ca.crt" -CAkey "$CERT_DIR/ca.key" -CAcreateserial -out "$CERT_DIR/$NAME.crt" -days 365 -sha256
-    
-    # Remove CSR (not needed after signing)
-    rm "$CERT_DIR/$NAME.csr"
+    echo "🔹 Generating $NAME certificate from Let's Encrypt..."
+
+    # Use the Let's Encrypt cert for all components
+    cp "$CERT_DIR/ca.crt" "$CERT_DIR/$NAME.crt"
+    cp "$CERT_DIR/ca.key" "$CERT_DIR/$NAME.key"
 }
 
 # Generate Certificates for ETCD, Kube-API, and Nodes
-generate_cert "etcd-server" "etcd-server"
-generate_cert "kube-apiserver" "kube-apiserver"
-generate_cert "node" "rke2-node"
+generate_cert_links "etcd-server"
+generate_cert_links "kube-apiserver"
+generate_cert_links "node"
 
 # List Generated Certificates
 echo "✅ Certificates generated in $CERT_DIR:"

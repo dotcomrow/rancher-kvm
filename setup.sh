@@ -24,8 +24,35 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
 
-# generate certs
-./generate-certs.sh
+EXPECTED_CERTS=(
+    "$CERT_DIR/ca.crt"
+    "$CERT_DIR/ca.key"
+    "$CERT_DIR/etcd-server.crt"
+    "$CERT_DIR/etcd-server.key"
+    "$CERT_DIR/kube-apiserver.crt"
+    "$CERT_DIR/kube-apiserver.key"
+    "$CERT_DIR/node.crt"
+    "$CERT_DIR/node.key"
+)
+
+# Function to verify that certificates exist
+verify_certs() {
+    echo "🔍 Verifying generated certificates..."
+    local missing_certs=0
+
+    for cert in "${EXPECTED_CERTS[@]}"; do
+        if [ ! -f "$cert" ]; then
+            echo "❌ Missing certificate: $cert"
+            missing_certs=1
+        else
+            echo "✅ Found: $cert"
+        fi
+    done
+
+    return $missing_certs
+}
+
+verify_certs || exit 1
 
 # Rancher Version
 RKE2_VERSION="v1.31.3+rke2r1"
@@ -391,3 +418,7 @@ subjects:
 EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n kubernetes-dashboard create token admin-user"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch clusters.management.cattle.io k8s-cluster --type='merge' -p '{\"spec\":{\"kubeconfigGeneration\":{\"caBundle\":\"\"}}}'"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n cattle-system rancher"
