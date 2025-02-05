@@ -18,10 +18,13 @@ rm -rf ~/.ssh/known_hosts
 
 # iterate over machines and add host entries to hosts file using qemu guest agent
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
+    echo "Adding host entry for $vm_name"
     while ! grep -q "ens3" <(virsh domifaddr $vm_name --source agent 2>&1); do
         sleep 1;
     done
+    echo "Waiting for SSH..."
     ssh -n $SSH_USER@$vm_name "until [ -f /home/$SSH_USER/fin ]; do sleep 1; done";
+    echo "Adding host entry for $vm_name"
     ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
 
