@@ -290,11 +290,6 @@ while [ $ATTEMPT -le $MAX_RETRIES ]; do
     fi
 done
 
-echo "❌ ERROR: Helm installation failed after $MAX_RETRIES attempts."
-exit 1
-
-ssh -n $SSH_USER@$RANCHER_MASTER "curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
-
 # Step 6: Install Cert-Manager for Rancher
 echo "Installing Cert-Manager for TLS certificates..."
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
