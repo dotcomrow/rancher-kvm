@@ -19,7 +19,7 @@ rm -rf ~/.ssh/known_hosts
 # Maximum number of retries
 MAX_RETRIES=10
 # Time to wait between retries
-RETRY_DELAY=10
+RETRY_DELAY=20
 
 execute_with_retry() {
     local cmd="$1"
