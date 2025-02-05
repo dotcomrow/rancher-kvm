@@ -247,21 +247,18 @@ done < <(virsh list --all | awk '/running/ && $2 ~ /'"$SERVER_NODE_PATTERN"'/ {p
 # Step 2: Install RKE2 on ETCD Nodes
 echo "Setting up ETCD Nodes..."
 while IFS= read -r NODE; do
-    echo "Installing Rancher RKE on $NODE";
     install_rke2 "$NODE" "server";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {print $2}')
 
 # Step 3: Install RKE2 on Additional Control Plane Nodes
 echo "Setting up Control Plane Nodes..."
 while IFS= read -r NODE; do
-    echo "Installing Rancher RKE on $NODE";
     install_rke2 "$NODE" "server";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {print $2}')
 
 # Step 4: Install RKE2 on Worker Nodes
 echo "Setting up Worker Nodes..."
 while IFS= read -r NODE; do
-    echo "Installing Rancher RKE on $NODE";
     install_rke2 "$NODE" "agent";
 done < <(virsh list --all | awk '/running/ && $2 ~ /'"$WORKER_NODE_PATTERN"'/ {print $2}')
 
