@@ -65,7 +65,7 @@ SSH_USER="rancher"
 RANCHER_MASTER="srvr-node-00"
 
 # Rancher domain
-RANCHER_HOSTNAME="rancher"
+RANCHER_HOSTNAME="k8s"
 RANCHER_DOMAIN="suncoast.systems"
 
 # Maximum number of retries
@@ -187,13 +187,12 @@ install_rke2() {
     
     copy_certs_and_trust  $NODE_IP
 
-    # Install RKE2
-    ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
-
     # Create custom RKE2 config with custom certificates
     ssh -n $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
 cluster-domain: $RANCHER_DOMAIN
-cluster-name: k8s-cluster
+
+node-label:
+  - "cluster-name=k8s-cluster"
 
 tls-san:
   - ${NODE_IP}
@@ -208,6 +207,9 @@ kube-apiserver:
   tls-cert-file: /etc/rancher/rke2/kube-apiserver.crt
   tls-private-key-file: /etc/rancher/rke2/kube-apiserver.key
 
+tls-cert-file: /etc/rancher/ssl/ca.crt
+tls-private-key-file: /etc/rancher/ssl/ca.key
+
 tls:
   cert-file: /etc/rancher/rke2/node.crt
   key-file: /etc/rancher/rke2/node.key
@@ -218,6 +220,9 @@ EOF"
         ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee -a /etc/rancher/rke2/config.yaml";
         ssh -n $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     fi
+
+    # Install RKE2
+    ssh -n $SSH_USER@$NODE_IP "curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_VERSION=$RKE2_VERSION sh -"
 
     # Start RKE2
     if [[ "$NODE_TYPE" == "server" ]]; then
