@@ -339,7 +339,7 @@ resource "libvirt_volume" "etcd_node" {
   pool   = libvirt_pool.vm.name
   base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
-  size   = var.SRVR_VM_IMG_SIZE
+  size   = var.ETCD_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "etcd_node" {
@@ -391,7 +391,7 @@ resource "libvirt_volume" "ctrl_node" {
   pool   = libvirt_pool.vm.name
   base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
-  size   = var.SRVR_VM_IMG_SIZE
+  size   = var.CTRL_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "ctrl_node" {
@@ -443,7 +443,7 @@ resource "libvirt_volume" "work_node" {
   pool   = libvirt_pool.vm.name
   base_volume_id = libvirt_volume.os_image_ubuntu.id
   format = var.VM_IMG_FORMAT
-  size   = var.SRVR_VM_IMG_SIZE
+  size   = var.WORK_VM_IMG_SIZE
 }
 
 resource "libvirt_domain" "work_node" {
