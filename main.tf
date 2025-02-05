@@ -144,7 +144,7 @@ variable "WORK_NODE_MEMORY" {
 }
 
 variable "WORK_VM_IMG_SIZE" {
-  default = 600 * 1024 * 1024 * 1024 # 600GiB.
+  default = 900 * 1024 * 1024 * 1024 # 900GiB.
   type    = string
 }
 
