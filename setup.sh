@@ -418,7 +418,3 @@ subjects:
 EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n kubernetes-dashboard create token admin-user"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch clusters.management.cattle.io k8s-cluster --type='merge' -p '{\"spec\":{\"kubeconfigGeneration\":{\"caBundle\":\"\"}}}'"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n cattle-system rancher"
