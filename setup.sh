@@ -335,11 +335,13 @@ EOF"
 
 
 # Step 7: Install Rancher via Helm
+
+BOOTSTRAP_PWD=$(openssl rand -base64 12)
 echo "Deploying Rancher UI on RKE2 cluster..."
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace cattle-system"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=$RANCHER_HOSTNAME --set bootstrapPassword=admin --kubeconfig /etc/rancher/rke2/rke2.yaml"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade rancher rancher-stable/rancher --namespace cattle-system --kubeconfig /etc/rancher/rke2/rke2.yaml --set hostname=$RANCHER_HOSTNAME.$RANCHER_DOMAIN --set bootstrapPassword=$BOOTSTRAP_PWD --set ingress.tls.source=letsEncrypt --set letsEncrypt.email=administrator@$RANCHER_DOMAIN --set letsEncrypt.ingress.class=traefik"
 
 # Step 8: Wait for Rancher to Deploy
 echo "Waiting for Rancher deployment to complete..."
