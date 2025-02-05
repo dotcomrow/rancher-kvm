@@ -16,6 +16,41 @@ resolvectl flush-caches
 
 rm -rf ~/.ssh/known_hosts
 
+# Maximum number of retries
+MAX_RETRIES=10
+# Time to wait between retries
+RETRY_DELAY=10
+
+execute_with_retry() {
+    local cmd="$1"
+    local verify_cmd="$2"
+    local retries=$MAX_RETRIES  # Number of retries
+    local delay=$RETRY_DELAY    # Delay between retries in seconds
+    local count=0
+    local timeout=15 # Timeout in seconds for SCP
+
+    for ((count=1; count<=retries; count++)); do
+        echo "Executing: $cmd"
+
+        # Run command with timeout protection
+        timeout "$timeout" bash -c "$cmd" && {
+            echo "✅ Command succeeded"
+            
+            # Verify the file exists
+            echo "Verifying: $verify_cmd"
+            eval "$verify_cmd" && return 0
+
+            echo "❌ Verification failed, retrying..."
+        }
+
+        echo "⚠️ Retry $count/$retries failed, retrying in $delay seconds..."
+        sleep "$delay"
+    done
+
+    echo "❌ ERROR: Command failed after $retries attempts: $cmd"
+    return 1  # Indicate failure
+}
+
 # iterate over machines and add host entries to hosts file using qemu guest agent
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     echo "Adding host entry for $vm_name"
@@ -23,7 +58,11 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
         sleep 1;
     done
     echo "Waiting for SSH..."
-    ssh -n $SSH_USER@$vm_name "until [ -f /home/$SSH_USER/fin ]; do sleep 1; done";
+
+    execute_with_retry \
+        "ssh -n $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
+        "ssh -n $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
+
     echo "Adding host entry for $vm_name"
     ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts;
 done
@@ -69,40 +108,7 @@ RANCHER_MASTER="srvr-node-00"
 RANCHER_HOSTNAME="k8s"
 RANCHER_DOMAIN="suncoast.systems"
 
-# Maximum number of retries
-MAX_RETRIES=10
-# Time to wait between retries
-RETRY_DELAY=10
 
-execute_with_retry() {
-    local cmd="$1"
-    local verify_cmd="$2"
-    local retries=$MAX_RETRIES  # Number of retries
-    local delay=$RETRY_DELAY    # Delay between retries in seconds
-    local count=0
-    local timeout=15 # Timeout in seconds for SCP
-
-    for ((count=1; count<=retries; count++)); do
-        echo "Executing: $cmd"
-
-        # Run command with timeout protection
-        timeout "$timeout" bash -c "$cmd" && {
-            echo "✅ Command succeeded"
-            
-            # Verify the file exists
-            echo "Verifying: $verify_cmd"
-            eval "$verify_cmd" && return 0
-
-            echo "❌ Verification failed, retrying..."
-        }
-
-        echo "⚠️ Retry $count/$retries failed, retrying in $delay seconds..."
-        sleep "$delay"
-    done
-
-    echo "❌ ERROR: Command failed after $retries attempts: $cmd"
-    return 1  # Indicate failure
-}
 
 # Rancher RKE2 Cluster Installation Script
 
