@@ -346,29 +346,6 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rk
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: kubernetes-dashboard
-  namespace: kubernetes-dashboard
-  annotations:
-    konghq.com/protocols: https
-spec:
-  ingressClassName: kong
-  rules:
-    - host: dashboard.$RANCHER_DOMAIN
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: kubernetes-dashboard-web
-                port:
-                  number: 8000
-EOF"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
