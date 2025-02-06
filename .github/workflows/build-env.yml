@@ -27,10 +27,10 @@ jobs:
                         name = "k8s-cluster" 
                     } 
                 } 
+            }
 
-                provider "libvirt" {
-                    uri = "qemu:///system"
-                }
+            provider "libvirt" {
+                uri = "qemu:///system"
             }
             EOF
 
