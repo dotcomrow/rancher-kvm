@@ -9,7 +9,7 @@ jobs:
   buildx:
     runs-on: self-hosted
     env:
-        TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        TF_API_TOKEN: ${{ secrets.TFE_TOKEN }}
     steps:
         - name: Debug Secrets
           run: |
@@ -34,12 +34,6 @@ jobs:
             EOF
     
         - uses: hashicorp/setup-terraform@v3
-          with:
-              cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }} 
-
-        - name: Set Terraform Credentials
-          run: |
-                echo ${{ secrets.TF_API_TOKEN }} | terraform login
 
         - name: Terraform Init
           run: terraform init
