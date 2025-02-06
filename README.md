@@ -1,2 +1,1 @@
-# rancher-kvm
-rancher kvm setup teradown scripts
+# suncoast systems k8s setup
