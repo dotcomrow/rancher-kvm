@@ -64,6 +64,12 @@ jobs:
         - name: Test Libvirt Access
           run: virsh -c qemu:///system list --all
 
+        - name: Debug Terraform Execution Environment
+          run: |
+                echo "Current working directory: $(pwd)"
+                echo "Container check: $(grep -q /docker /proc/self/cgroup && echo 'Running in container' || echo 'Not in container')"
+                mount | grep libvirt
+
         - name: terraform apply
           run: |
                     sudo -u $(whoami) virsh -c qemu:///system list --all
