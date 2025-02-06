@@ -16,6 +16,8 @@ jobs:
 
         - name: Setup Terraform Backend
           id: backend
+          env:
+            TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
           run: |
             cat > backend.tf << EOF
             terraform {
