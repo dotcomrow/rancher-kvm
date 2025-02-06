@@ -8,15 +8,35 @@ on:
 jobs:
   buildx:
     runs-on: self-hosted
+    container:
+      image: ubuntu:latest
+      options: --privileged
+      volumes:
+        - /var/run/libvirt:/var/run/libvirt
+
     env:
         TF_API_TOKEN: ${{ secrets.TFE_TOKEN }}
+
     steps:
-                
-        - name: Checkout
+        - name: Install Dependencies
+          run: |
+            apt-get update
+            apt-get install -y \
+              libvirt-clients \
+              libvirt-daemon \
+              libvirt-daemon-system \
+              qemu-kvm \
+              terraform \
+              curl \
+              unzip
+            curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+            apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+            apt-get update && apt-get install -y terraform
+
+        - name: Checkout Repository
           uses: actions/checkout@v3
 
         - name: Setup Terraform Backend
-          id: backend
           run: |
             cat > backend.tf << EOF
             terraform { 
@@ -30,57 +50,32 @@ jobs:
             }
             EOF
 
-        - name: Manually Configure Terraform Credentials
+        - name: Configure Terraform Credentials
           run: |
-            mkdir -p .terraform.d
             mkdir -p ~/.terraform.d
-            sudo mkdir -p /root/.terraform.d
-            cat <<EOF > .terraform.d/credentials.tfrc.json
+            cat <<EOF > ~/.terraform.d/credentials.tfrc.json
             {
-            "credentials": {
+              "credentials": {
                 "app.terraform.io": {
-                "token": "${TF_API_TOKEN}"
+                  "token": "${TF_API_TOKEN}"
                 }
-            }
+              }
             }
             EOF
-            cp .terraform.d/credentials.tfrc.json ~/.terraform.d/credentials.tfrc.json
-            sudo cp .terraform.d/credentials.tfrc.json /root/.terraform.d/credentials.tfrc.json
 
-        - uses: hashicorp/setup-terraform@v3
+        - name: Setup Terraform
+          uses: hashicorp/setup-terraform@v3
 
         - name: Terraform Init
           run: terraform init 
 
-        - name: Start Libvirt Daemon
-          run: sudo systemctl start libvirtd
+        - name: Teardown Cluster
+          run: terraform destroy -auto-approve
 
-        - name: Check Libvirt Status
-          run: sudo systemctl status libvirtd   
+        - name: Apply Terraform Configuration
+          run: terraform apply -auto-approve
 
-        - name: teardown cluster
+        - name: Setup Cluster
           run: |
-                virsh -c qemu:///system list --all
-                sudo terraform destroy -auto-approve
-
-        - name: Test Libvirt Access
-          run: virsh -c qemu:///system list --all
-
-        - name: terraform apply
-          run: |
-                  systemctl show actions.runner.YOUR_RUNNER | grep ProtectSystem
-                  systemctl show actions.runner.YOUR_RUNNER | grep PrivateTmp
-                    sudo -u $(whoami) virsh -c qemu:///system list --all
-                    groups $(whoami)
-                    virsh uri
-                    virsh -c qemu:///session list
-                    ls -al /var/run
-                    ls -al /var/run/libvirt
-                    sudo terraform apply -auto-approve
-
-        - name: setup cluster
-          run: |
-            
-                echo $TF_API_TOKEN | terraform login app.terraform.io
-                ./setup.sh
-        
+            echo $TF_API_TOKEN | terraform login app.terraform.io
+            ./setup.sh
