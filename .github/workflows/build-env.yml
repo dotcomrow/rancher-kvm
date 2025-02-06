@@ -11,9 +11,6 @@ jobs:
     env:
         TF_API_TOKEN: ${{ secrets.TFE_TOKEN }}
     steps:
-        - name: Debug Token Length
-          run: |
-            echo "Token length: ${#TF_API_TOKEN}"
                 
         - name: Checkout
           uses: actions/checkout@v3
@@ -34,10 +31,6 @@ jobs:
             EOF
     
         - uses: hashicorp/setup-terraform@v3
-
-        - name: Set Terraform Credentials
-          run: |
-                echo ${{ env.TF_API_TOKEN }} | terraform login
 
         - name: Terraform Init
           run: TF_LOG=DEBUG terraform init
