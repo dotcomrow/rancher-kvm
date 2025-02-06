@@ -107,7 +107,19 @@ verify_certs() {
     return $missing_certs
 }
 
-verify_certs || exit 1
+# Run verification, if it fails, regenerate certs
+if ! verify_certs; then
+    echo "⚠️ Verification failed! Regenerating certificates..."
+    ./generate-certs.sh
+
+    # Re-run verification after regeneration
+    if ! verify_certs; then
+        echo "❌ ERROR: Certificate verification failed after regeneration!"
+        exit 1
+    fi
+fi
+
+echo "✅ All certificates verified successfully!"
 
 # Rancher RKE2 Cluster Installation Script
 
@@ -361,7 +373,6 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rk
 # Add kubernetes-dashboard repository
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/"
 # Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard -n kubernetes-dashboard --kubeconfig /etc/rancher/rke2/rke2.yaml"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
 
@@ -411,7 +422,7 @@ apiVersion: management.cattle.io/v3
 kind: OIDCClient
 metadata:
   name: kubernetes-dashboard
-  namespace: cattle-system
+  namespace: kubernetes-dashboard
 spec:
   displayName: 'Kubernetes Dashboard OIDC Client'
   allowedPrincipalIds: []  # Restrict access if needed, leave empty for all Rancher users

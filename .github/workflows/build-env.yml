@@ -9,10 +9,16 @@ jobs:
   buildx:
     runs-on: self-hosted
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+        - name: Checkout
+          uses: actions/checkout@v3
 
-      - name: build image 
-        run: |
-          echo "hi";
+        - name: teardown cluster
+          run: |
+                > /tmp/rks2-teardown.log
+                sudo ./teardown.sh
+
+        - name: setup cluster
+          run: |
+                > /tmp/rks2-setup.log
+                sudo ./setup.sh
         
