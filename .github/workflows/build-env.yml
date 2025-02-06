@@ -59,7 +59,7 @@ jobs:
         - name: teardown cluster
           run: |
                 virsh -c qemu:///system list --all
-                terraform destroy -auto-approve
+                sudo terraform destroy -auto-approve
 
         - name: Test Libvirt Access
           run: virsh -c qemu:///system list --all
@@ -72,7 +72,7 @@ jobs:
                     virsh -c qemu:///session list
                     ls -al /var/run
                     ls -al /var/run/libvirt
-                    terraform apply -auto-approve
+                    sudo terraform apply -auto-approve
 
         - name: setup cluster
           run: |
