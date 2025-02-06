@@ -29,7 +29,7 @@ jobs:
             }
             EOF
     
-        - uses: hashicorp/setup-terraform@latest
+        - uses: hashicorp/setup-terraform@v3.1.2
           with:
               terraform_version: "1.x" 
 
