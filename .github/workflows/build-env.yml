@@ -77,6 +77,15 @@ jobs:
         - name: Teardown Cluster
           run: terraform destroy -auto-approve
 
+        - name: Debug Libvirt Connection
+          run: |
+              echo "Checking Libvirt socket..."
+              ls -l /var/run/libvirt/libvirt-sock
+              echo "Testing virsh connection..."
+              virsh -c qemu:///system list --all
+              echo "Checking Terraform Libvirt connection..."
+              terraform console <<< 'data "libvirt_pool" "default" { name = "default" }'
+
         - name: Apply Terraform Configuration
           run: terraform apply -auto-approve
 
