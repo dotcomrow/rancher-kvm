@@ -28,10 +28,6 @@ jobs:
                     } 
                 } 
             }
-
-            provider "libvirt" {
-                uri = "qemu:///system"
-            }
             EOF
 
         - name: Manually Configure Terraform Credentials
