@@ -27,7 +27,7 @@ jobs:
             }
             EOF
     
-        - uses: hashicorp/setup-terraform@v3.1.2
+        - uses: hashicorp/setup-terraform@v1
           with:
               terraform_version: "1.x"
               cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }} 
