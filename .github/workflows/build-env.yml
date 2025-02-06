@@ -20,7 +20,7 @@ jobs:
           run: |
             cat > backend.tf << EOF
             terraform { 
-                cloud { 
+                backend "remote" { 
                     organization = "${{ github.repository_owner }}"
 
                     workspaces { 
@@ -33,6 +33,7 @@ jobs:
         - name: Manually Configure Terraform Credentials
           run: |
             mkdir -p .terraform.d
+            mkdir -p ~/.terraform.d
             cat <<EOF > .terraform.d/credentials.tfrc.json
             {
             "credentials": {
@@ -42,11 +43,12 @@ jobs:
             }
             }
             EOF
+            cp .terraform.d/credentials.tfrc.json ~/.terraform.d/credentials.tfrc.json
 
         - uses: hashicorp/setup-terraform@v3
 
         - name: Terraform Init
-          run: TF_LOG=DEBUG terraform init -backend-config="token=${TF_API_TOKEN}"
+          run: TF_LOG=DEBUG terraform init 
 
         - name: teardown cluster
           run: |
