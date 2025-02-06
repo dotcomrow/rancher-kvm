@@ -12,11 +12,28 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v3
 
+        - name: Setup Terraform Backend
+          id: backend
+          run: |
+            cat > backend.tf << EOF
+            terraform {
+              backend "remote" {
+                organization = "${{ github.repository_owner }}"
+    
+                workspaces {
+                  name = "k8s-cluster"
+                }
+              }
+            }
+            EOF
+    
+        - name: Terraform Init
+          id: init
+          run: terraform init
+
         - name: teardown cluster
           run: |
-                sudo /bin/bash
-                source /home/chris/.bashrc
-                sudo ./teardown.sh
+                terraform destroy -auto-approve
 
         - name: setup cluster
           run: |

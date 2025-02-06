@@ -6,7 +6,6 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-terraform init
 terraform apply --auto-approve
 
 resolvectl flush-caches
