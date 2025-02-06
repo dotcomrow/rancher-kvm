@@ -8,6 +8,9 @@ on:
 jobs:
   buildx:
     runs-on: self-hosted
+    env:
+      TF_CLOUD_ORGANIZATION: ${{ github.repository_owner }}
+      TF_API_TOKEN: ${{ secrets.TFE_TOKEN }}
     steps:
         - name: Checkout
           uses: actions/checkout@v3
@@ -18,8 +21,6 @@ jobs:
             cat > backend.tf << EOF
             terraform {
               backend "remote" {
-                organization = "${{ github.repository_owner }}"
-    
                 workspaces {
                   name = "k8s-cluster"
                 }
