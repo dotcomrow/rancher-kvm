@@ -9,6 +9,12 @@ jobs:
   buildx:
     runs-on: self-hosted
     steps:
+        - name: Debug Secrets
+          run: |
+                echo "GITHUB_TOKEN is set: ${GITHUB_TOKEN:+yes}"
+                echo "TF_API_TOKEN is set: ${TF_API_TOKEN:+yes}"
+                echo "Secrets: $(env | grep SECRET || true)"
+                
         - name: Checkout
           uses: actions/checkout@v3
 
@@ -30,6 +36,10 @@ jobs:
         - uses: hashicorp/setup-terraform@v3
           with:
               cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }} 
+
+        - name: Set Terraform Credentials
+          run: |
+                echo ${{ secrets.TF_API_TOKEN }} | terraform login
 
         - name: Terraform Init
           run: terraform init
