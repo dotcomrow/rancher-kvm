@@ -14,9 +14,13 @@ jobs:
 
         - name: teardown cluster
           run: |
+                sudo /bin/bash
+                source /home/chris/.bashrc
                 sudo ./teardown.sh
 
         - name: setup cluster
           run: |
+                sudo /bin/bash
+                source /home/chris/.bashrc
                 sudo ./setup.sh
         
