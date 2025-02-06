@@ -46,7 +46,7 @@ jobs:
         - uses: hashicorp/setup-terraform@v3
 
         - name: Terraform Init
-          run: TF_LOG=DEBUG terraform init
+          run: TF_LOG=DEBUG terraform init -backend-config="token=${TF_API_TOKEN}"
 
         - name: teardown cluster
           run: |
