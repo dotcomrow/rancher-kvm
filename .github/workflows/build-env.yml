@@ -19,14 +19,6 @@ jobs:
         TF_API_TOKEN: ${{ secrets.TFE_TOKEN }}
 
     steps:
-        - name: Fix Docker Permissions
-          run: |
-            apt-get update && apt-get install -y docker.io
-            groupadd docker || true
-            usermod -aG docker $(whoami)
-            chmod 666 /var/run/docker.sock  # Allow all users to access Docker
-            newgrp docker  # Apply group change
-
         - name: Install Dependencies
           run: |
             apt-get update
