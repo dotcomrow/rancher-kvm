@@ -18,14 +18,15 @@ jobs:
           id: backend
           run: |
             cat > backend.tf << EOF
-            terraform {
-              backend "remote" {
-                organization = "${{ github.repository_owner }}"
-    
-                workspaces {
-                  name = "k8s-cluster"
-                }
-              }
+            terraform { 
+                cloud { 
+                    
+                    organization = "dotcomrow" 
+
+                    workspaces { 
+                    name = "k8s-cluster" 
+                    } 
+                } 
             }
             EOF
     
