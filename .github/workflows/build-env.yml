@@ -35,6 +35,10 @@ jobs:
     
         - uses: hashicorp/setup-terraform@v3
 
+        - name: Set Terraform Credentials
+          run: |
+                echo ${{ env.TF_API_TOKEN }} | terraform login
+
         - name: Terraform Init
           run: terraform init
 
