@@ -68,6 +68,8 @@ jobs:
 
         - name: terraform apply
           run: |
+                  systemctl show actions.runner.YOUR_RUNNER | grep ProtectSystem
+                  systemctl show actions.runner.YOUR_RUNNER | grep PrivateTmp
                     sudo -u $(whoami) virsh -c qemu:///system list --all
                     groups $(whoami)
                     virsh uri
