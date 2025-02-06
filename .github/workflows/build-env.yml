@@ -14,11 +14,9 @@ jobs:
 
         - name: teardown cluster
           run: |
-                sudo cat /dev/null > /tmp/rks2-teardown.log
                 sudo ./teardown.sh
 
         - name: setup cluster
           run: |
-                sudo cat /dev/null > /tmp/rks2-setup.log
                 sudo ./setup.sh
         
