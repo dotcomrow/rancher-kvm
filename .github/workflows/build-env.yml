@@ -57,7 +57,7 @@ jobs:
         - name: terraform apply
           run: |
                     groups $(whoami)
-                    
+                    virsh uri
                     terraform apply -auto-approve
 
         - name: setup cluster
