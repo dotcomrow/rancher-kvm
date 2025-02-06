@@ -58,10 +58,15 @@ jobs:
 
         - name: teardown cluster
           run: |
+                virsh -c qemu:///system list --all
                 terraform destroy -auto-approve
+
+        - name: Test Libvirt Access
+          run: virsh -c qemu:///system list --all
 
         - name: terraform apply
           run: |
+                    sudo -u $(whoami) virsh -c qemu:///system list --all
                     groups $(whoami)
                     virsh uri
                     virsh -c qemu:///session list
