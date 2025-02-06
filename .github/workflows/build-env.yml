@@ -9,10 +9,11 @@ jobs:
   buildx:
     runs-on: self-hosted
     container:
-        image: dmacvicar/libvirt
-        options: --privileged
-        volumes:
-          - /var/run/libvirt:/var/run/libvirt
+      image: ubuntu:latest
+      options: --privileged
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock  # Grant access to Docker
+        - /var/run/libvirt:/var/run/libvirt
 
     env:
         TF_API_TOKEN: ${{ secrets.TFE_TOKEN }}
@@ -35,6 +36,7 @@ jobs:
             curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
             apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
             apt-get update && apt-get install -y terraform
+            ls -al /var/run/libvirt
 
         - name: Checkout Repository
           uses: actions/checkout@v3
