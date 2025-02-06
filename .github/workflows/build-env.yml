@@ -54,10 +54,12 @@ jobs:
           run: |
                 terraform destroy -auto-approve
 
+        - name: terraform apply
+          run: |
+                    terraform apply -auto-approve
+
         - name: setup cluster
           run: |
-                sudo /bin/bash
                 echo $TF_API_TOKEN | terraform login app.terraform.io
-                source /home/chris/.bashrc
-                sudo ./setup.sh
+                ./setup.sh
         
