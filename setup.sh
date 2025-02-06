@@ -16,6 +16,16 @@ resolvectl flush-caches
 
 rm -rf ~/.ssh/known_hosts
 
+# SSH User
+SSH_USER="rancher"
+
+# Rancher master node
+RANCHER_MASTER="srvr-node-00"
+
+# Rancher domain
+RANCHER_HOSTNAME="k8s"
+RANCHER_DOMAIN="suncoast.systems"
+
 # Maximum number of retries
 MAX_RETRIES=10
 # Time to wait between retries
@@ -98,18 +108,6 @@ verify_certs() {
 }
 
 verify_certs || exit 1
-
-# SSH User
-SSH_USER="rancher"
-
-# Rancher master node
-RANCHER_MASTER="srvr-node-00"
-
-# Rancher domain
-RANCHER_HOSTNAME="k8s"
-RANCHER_DOMAIN="suncoast.systems"
-
-
 
 # Rancher RKE2 Cluster Installation Script
 
