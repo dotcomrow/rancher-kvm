@@ -58,6 +58,7 @@ jobs:
           run: |
                     groups $(whoami)
                     virsh uri
+                    virsh -c qemu:///session list
                     terraform apply -auto-approve
 
         - name: setup cluster
