@@ -29,7 +29,20 @@ jobs:
                 } 
             }
             EOF
-    
+
+        - name: Manually Configure Terraform Credentials
+          run: |
+            mkdir -p .terraform.d
+            cat <<EOF > .terraform.d/credentials.tfrc.json
+            {
+            "credentials": {
+                "app.terraform.io": {
+                "token": "${TF_API_TOKEN}"
+                }
+            }
+            }
+            EOF
+
         - uses: hashicorp/setup-terraform@v3
 
         - name: Terraform Init
