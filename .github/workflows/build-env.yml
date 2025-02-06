@@ -50,6 +50,12 @@ jobs:
         - name: Terraform Init
           run: terraform init 
 
+        - name: Start Libvirt Daemon
+          run: sudo systemctl start libvirtd
+
+        - name: Check Libvirt Status
+          run: sudo systemctl status libvirtd   
+
         - name: teardown cluster
           run: |
                 terraform destroy -auto-approve
