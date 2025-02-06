@@ -85,7 +85,7 @@ jobs:
               virsh -c qemu:///system list --all
               echo "Checking Terraform Libvirt connection..."
               mkdir -p test
-              echo 'provider "libvirt" { uri = "qemu+unix:///system?socket=/var/run/libvirt/libvirt-sock" }' > test/main.tf
+              echo 'terraform { required_providers { libvirt = { source = "dmacvicar/libvirt" } } } provider "libvirt" { uri = "qemu+unix:///system?socket=/var/run/libvirt/libvirt-sock" }' > test/main.tf
               echo 'data "libvirt_pool" "default" { name = "default" }' >> test/main.tf
               echo 'output "pool_id" { value = data.libvirt_pool.default.id }' >> test/main.tf
 
