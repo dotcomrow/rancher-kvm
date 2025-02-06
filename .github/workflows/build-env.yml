@@ -35,7 +35,6 @@ jobs:
               libvirt-daemon \
               libvirt-daemon-system \
               qemu-kvm \
-              terraform \
               curl \
               unzip
             curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
