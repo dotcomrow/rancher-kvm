@@ -20,18 +20,20 @@ jobs:
             cat > backend.tf << EOF
             terraform { 
                 cloud { 
-                    
-                    organization = "dotcomrow" 
+                    organization = "${{ github.repository_owner }}"
 
                     workspaces { 
-                    name = "k8s-cluster" 
+                        name = "k8s-cluster" 
                     } 
                 } 
             }
             EOF
     
+        - uses: hashicorp/setup-terraform@latest
+          with:
+              terraform_version: "1.x" 
+
         - name: Terraform Init
-          id: init
           run: terraform init
 
         - name: teardown cluster
