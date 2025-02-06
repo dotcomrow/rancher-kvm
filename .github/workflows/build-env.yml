@@ -84,7 +84,14 @@ jobs:
               echo "Testing virsh connection..."
               virsh -c qemu:///system list --all
               echo "Checking Terraform Libvirt connection..."
-              terraform console <<< 'data "libvirt_pool" "default" { name = "default" }'
+              mkdir -p test
+              echo 'provider "libvirt" { uri = "qemu+unix:///system?socket=/var/run/libvirt/libvirt-sock" }' > test/test.tf
+              echo 'data "libvirt_pool" "default" { name = "default" }' >> test/test.tf
+              echo 'output "pool_id" { value = data.libvirt_pool.default.id }' >> test/test.tf
+              terraform init
+              terraform apply -auto-approve -target=test
+              terraform destroy -auto-approve -target=test
+              rm -rf test.tf
 
         - name: Apply Terraform Configuration
           run: terraform apply -auto-approve
