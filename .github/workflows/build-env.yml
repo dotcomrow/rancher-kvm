@@ -65,6 +65,8 @@ jobs:
                     groups $(whoami)
                     virsh uri
                     virsh -c qemu:///session list
+                    ls -al /var/run
+                    ls -al /var/run/libvirt
                     terraform apply -auto-approve
 
         - name: setup cluster
