@@ -56,10 +56,13 @@ jobs:
 
         - name: terraform apply
           run: |
+                    groups $(whoami)
+                    
                     terraform apply -auto-approve
 
         - name: setup cluster
           run: |
+            
                 echo $TF_API_TOKEN | terraform login app.terraform.io
                 ./setup.sh
         
