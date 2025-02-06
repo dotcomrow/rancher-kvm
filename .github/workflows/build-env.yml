@@ -9,11 +9,10 @@ jobs:
   buildx:
     runs-on: self-hosted
     container:
-      image: ubuntu:latest
-      options: --privileged
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock  # Grant access to Docker
-        - /var/run/libvirt:/var/run/libvirt
+        image: dmacvicar/libvirt
+        options: --privileged
+        volumes:
+          - /var/run/libvirt:/var/run/libvirt
 
     env:
         TF_API_TOKEN: ${{ secrets.TFE_TOKEN }}
