@@ -34,6 +34,7 @@ jobs:
           run: |
             mkdir -p .terraform.d
             mkdir -p ~/.terraform.d
+            mkdir -p /root/.terraform.d
             cat <<EOF > .terraform.d/credentials.tfrc.json
             {
             "credentials": {
@@ -44,6 +45,7 @@ jobs:
             }
             EOF
             cp .terraform.d/credentials.tfrc.json ~/.terraform.d/credentials.tfrc.json
+            cp .terraform.d/credentials.tfrc.json /root/.terraform.d/credentials.tfrc.json
 
         - uses: hashicorp/setup-terraform@v3
 
