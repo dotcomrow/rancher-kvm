@@ -8,12 +8,12 @@ on:
 jobs:
   buildx:
     runs-on: self-hosted
+    env:
+        TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
     steps:
         - name: Debug Secrets
           run: |
-                echo "GITHUB_TOKEN is set: ${GITHUB_TOKEN:+yes}"
                 echo "TF_API_TOKEN is set: ${TF_API_TOKEN:+yes}"
-                echo "Secrets: $(env | grep SECRET || true)"
                 
         - name: Checkout
           uses: actions/checkout@v3
