@@ -59,7 +59,7 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     $(whoami)
     gpg --list-secret-keys
 
-    execute_with_retry "ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "ssh -n $SSH_USER@$vm_name 'echo $vm_name'"
+    execute_with_retry "ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "resolvectl flush-caches; ssh -n $SSH_USER@$vm_name 'echo $vm_name'"
 
     execute_with_retry \
         "ssh -n $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \

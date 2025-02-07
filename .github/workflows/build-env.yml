@@ -51,12 +51,11 @@ jobs:
       - name: Terraform Destroy
         run: |
           terraform destroy -auto-approve
-
-      - name: Flush DNS Cache
-        run: resolvectl flush-caches
   
       - name: Build cluster
         run: |
+            eval "$(ssh-agent -s)"
+            ssh-add -L
             terraform apply -auto-approve 
             sudo ./setup.sh
 
