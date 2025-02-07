@@ -57,6 +57,7 @@ jobs:
 
       - name: Debug Libvirt Provider
         run: |
+          export TF_LOG=DEBUG
           mkdir -p test
           cat > test/main.tf << EOF
           terraform { 
