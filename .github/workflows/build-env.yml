@@ -72,7 +72,7 @@ jobs:
           resource "libvirt_pool" "default" {
             name = "default"
             type = "dir"
-            path = "/var/lib/libvirt/images"
+            path = "/tmp/test"
           }
           output "pool_id" { value = libvirt_pool.default.id }
           EOF
