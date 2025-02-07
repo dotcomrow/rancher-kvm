@@ -51,6 +51,12 @@ jobs:
       - name: Terraform Destroy
         run: |
           terraform destroy -auto-approve
+
+      - name: Start SSH Agent
+        run: |
+            eval $(ssh-agent -s)
+            gpg-connect-agent updatestartuptty /bye
+            ssh-add ~/.gnupg/private-keys-v1.d/C1A0AA21A76EAFE63B176F58C33CFF9F98CA9AAD.key
   
       - name: Build cluster
         run: |
