@@ -158,9 +158,9 @@ variable "WORK_VM_IMG_SIZE" {
 ################################################################################
 
 # instance the provider
-provider "libvirt" {
-  uri = "qemu+unix:///system?socket=/var/run/libvirt/libvirt-sock" 
-}
+provider "libvirt" { 
+  uri = "qemu:///system" 
+} 
 
 ################################################################################
 # DATA TEMPLATES
