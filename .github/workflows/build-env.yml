@@ -49,7 +49,9 @@ jobs:
         run: terraform init 
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: |
+          terraform destroy -auto-approve
+          resolvectl flush-caches
   
       - name: Build cluster
         run: |

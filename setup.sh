@@ -1,7 +1,5 @@
 #!/bin/bash
 
-resolvectl flush-caches
-
 rm -rf ~/.ssh/known_hosts
 
 # SSH User
