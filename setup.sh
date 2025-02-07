@@ -54,17 +54,17 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
         sleep 1;
     done
     echo "Waiting for SSH..."
-    execute_with_retry "resolvectl flush-caches; ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "resolvectl flush-caches; ssh -n $SSH_USER@$vm_name 'echo $vm_name'"
+    execute_with_retry "resolvectl flush-caches; ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "resolvectl flush-caches; ssh -n -v $SSH_USER@$vm_name 'echo $vm_name'"
 
     execute_with_retry \
-        "ssh -n $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
-        "ssh -n $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
+        "ssh -n -v $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
+        "ssh -n -v $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
 
     echo "Adding host entry for $vm_name"
     
 done
 
-CERT_DIR="certs"
+CERT_DIR="~/certs"
 EXPECTED_CERTS=(
     "$CERT_DIR/ca.crt"
     "$CERT_DIR/ca.key"
@@ -110,14 +110,14 @@ echo "✅ All certificates verified successfully!"
 # Rancher RKE2 Cluster Installation Script
 
 # Custom TLS Certificate Paths
-CUSTOM_CA_CERT="certs/ca.crt"
-CUSTOM_CA_KEY="certs/ca.key"
-CUSTOM_KUBE_CERT="certs/kube-apiserver.crt"
-CUSTOM_KUBE_KEY="certs/kube-apiserver.key"
-CUSTOM_ETCD_CERT="certs/etcd-server.crt"
-CUSTOM_ETCD_KEY="certs/etcd-server.key"
-CUSTOM_NODE_CERT="certs/node.crt"
-CUSTOM_NODE_KEY="certs/node.key"
+CUSTOM_CA_CERT="$CERT_DIR/ca.crt"
+CUSTOM_CA_KEY="$CERT_DIR/ca.key"
+CUSTOM_KUBE_CERT="$CERT_DIR/kube-apiserver.crt"
+CUSTOM_KUBE_KEY="$CERT_DIR/kube-apiserver.key"
+CUSTOM_ETCD_CERT="$CERT_DIR/etcd-server.crt"
+CUSTOM_ETCD_KEY="$CERT_DIR/etcd-server.key"
+CUSTOM_NODE_CERT="$CERT_DIR/node.crt"
+CUSTOM_NODE_KEY="$CERT_DIR/node.key"
 
 # Function to Copy Certificates to Nodes and Add CA to Trust Store
 copy_certs_and_trust() {
