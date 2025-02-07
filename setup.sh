@@ -54,11 +54,11 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
         sleep 1;
     done
     echo "Waiting for SSH..."
-    execute_with_retry "resolvectl flush-caches; ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "resolvectl flush-caches; ssh -n -v $SSH_USER@$vm_name 'echo $vm_name'"
+    execute_with_retry "resolvectl flush-caches; ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "resolvectl flush-caches; ssh -n $SSH_USER@$vm_name 'echo $vm_name'"
 
     execute_with_retry \
-        "ssh -n -v $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
-        "ssh -n -v $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
+        "ssh -n $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
+        "ssh -n $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
 
     echo "Adding host entry for $vm_name"
     
