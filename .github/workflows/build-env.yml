@@ -55,7 +55,7 @@ jobs:
       - name: Build cluster
         run: |
             terraform apply -auto-approve 
-            sudo killall gpg-agent || true
+            sudo kill -KILL $(ps -aef | grep "[g]pg-agent" | awk '{print $2}')
             eval $(gpg-agent --homedir /home/chris/.gnupg --daemon --enable-ssh-support)
             sudo chmod 777 $SSH_AUTH_SOCK
             echo $SSH_AUTH_SOCK
