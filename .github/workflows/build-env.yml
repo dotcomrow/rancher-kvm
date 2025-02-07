@@ -6,87 +6,83 @@ on:
       - prod
 
 jobs:
-  buildx:
-    runs-on: self-hosted
-    container:
-      image: ubuntu:latest
-      options: --privileged
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock  # Grant access to Docker
-        - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+  build:
+    runs-on: self-hosted  # Run directly on the host, NOT in a container
 
     env:
         TF_API_TOKEN: ${{ secrets.TFE_TOKEN }}
 
     steps:
-        - name: Install Dependencies
-          run: |
-            apt-get update
-            apt-get install -y \
-              libvirt-clients \
-              libvirt-daemon \
-              libvirt-daemon-system \
-              qemu-kvm \
-              curl \
-              gnupg \
-              software-properties-common \
-              lsb-release \
-              nodejs \
-              unzip
-            curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
-            apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-            apt-get update && apt-get install -y terraform
-            ls -al /var/run/libvirt
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-        - name: Checkout Repository
-          uses: actions/checkout@v3
+      - name: Verify Libvirt Connection
+        run: |
+          echo "Checking libvirt socket..."
+          ls -l /var/run/libvirt/libvirt-sock
+          echo "Testing virsh connection..."
+          virsh -c qemu:///system list --all
 
-        - name: Setup Terraform Backend
-          run: |
-            cat > backend.tf << EOF
-            terraform { 
-                backend "remote" { 
-                    organization = "${{ github.repository_owner }}"
+      - name: Setup Terraform Backend
+        run: |
+          cat > backend.tf << EOF
+          terraform { 
+              backend "remote" { 
+                  organization = "${{ github.repository_owner }}"
+                  workspaces { 
+                      name = "k8s-cluster" 
+                  } 
+              } 
+          }
+          EOF
 
-                    workspaces { 
-                        name = "k8s-cluster" 
-                    } 
-                } 
-            }
-            EOF
-
-        - name: Configure Terraform Credentials
-          run: |
-            mkdir -p ~/.terraform.d
-            cat <<EOF > ~/.terraform.d/credentials.tfrc.json
-            {
-              "credentials": {
-                "app.terraform.io": {
-                  "token": "${TF_API_TOKEN}"
-                }
+      - name: Configure Terraform Credentials
+        run: |
+          mkdir -p ~/.terraform.d
+          cat <<EOF > ~/.terraform.d/credentials.tfrc.json
+          {
+            "credentials": {
+              "app.terraform.io": {
+                "token": "${TF_API_TOKEN}"
               }
             }
-            EOF
+          }
+          EOF
 
-        - name: Setup Terraform
-          uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-        - name: Terraform Init
-          run: terraform init 
+      - name: Terraform Init
+        run: terraform init 
 
-        - name: Teardown Cluster
-          run: terraform destroy -auto-approve
+      - name: Debug Libvirt Provider
+        run: |
+          mkdir -p test
+          cat > test/main.tf << EOF
+          terraform { 
+            required_providers { 
+              libvirt = { 
+                source = "dmacvicar/libvirt"
+              } 
+            } 
+          } 
+          provider "libvirt" { 
+            uri = "qemu:///system" 
+          } 
+          resource "libvirt_pool" "default" {
+            name = "default"
+            type = "dir"
+            path = "/var/lib/libvirt/images"
+          }
+          output "pool_id" { value = libvirt_pool.default.id }
+          EOF
 
-        - name: Apply Terraform Configuration
-          run: |
-              echo "Checking Libvirt socket..."
-              ls -l /var/run/libvirt/libvirt-sock
-              echo "Testing virsh connection..."
-              virsh -c qemu:///system list --all
-              echo "Checking Terraform Libvirt connection..."
-              terraform apply -auto-approve
+          cd test
+          terraform init
+          terraform apply -auto-approve -target=libvirt_pool.default
+          terraform destroy -auto-approve -target=libvirt_pool.default
+          cd ..
+          rm -rf test
 
-        - name: Setup Cluster
-          run: |
-            echo $TF_API_TOKEN | terraform login app.terraform.io
-            ./setup.sh
+      - name: Apply Terraform Configuration
+        run: terraform apply -auto-approve
