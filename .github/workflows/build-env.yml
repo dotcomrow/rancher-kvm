@@ -59,7 +59,11 @@ jobs:
             eval $(gpg-agent --homedir /home/chris/.gnupg --daemon --enable-ssh-support)
             sudo chmod 777 $SSH_AUTH_SOCK
             echo $SSH_AUTH_SOCK
-            gpg-connect-agent reloadagent /bye
+            gpg-connect-agent updatestartuptty /bye
+            sudo chown $(whoami) $(gpgconf --list-dirs agent-ssh-socket)
+            GPG_AGENT_SOCK=$(gpgconf --list-dirs agent-socket)
+            echo "GPG Agent Socket: $GPG_AGENT_SOCK"
+            gpg-connect-agent -S "$GPG_AGENT_SOCK" reloadagent /bye
             ssh-add -L
             sudo ./setup.sh
 
