@@ -51,7 +51,9 @@ jobs:
       - name: Terraform Destroy
         run: |
           terraform destroy -auto-approve
-          resolvectl flush-caches
+
+      - name: Flush DNS Cache
+        run: resolvectl flush-caches
   
       - name: Build cluster
         run: |
