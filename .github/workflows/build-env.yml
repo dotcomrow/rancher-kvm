@@ -77,43 +77,14 @@ jobs:
         - name: Teardown Cluster
           run: terraform destroy -auto-approve
 
-        - name: Debug Libvirt Connection
+        - name: Apply Terraform Configuration
           run: |
               echo "Checking Libvirt socket..."
               ls -l /var/run/libvirt/libvirt-sock
               echo "Testing virsh connection..."
               virsh -c qemu:///system list --all
               echo "Checking Terraform Libvirt connection..."
-              mkdir -p test
-              echo 'terraform { 
-                required_providers { 
-                  libvirt = { 
-                    source = "dmacvicar/libvirt" 
-                  } 
-                } 
-              } 
-
-              provider "libvirt" { 
-                uri = "qemu+unix:///system?socket=/var/run/libvirt/libvirt-sock" 
-              }' > test/main.tf
-              echo 'resource "libvirt_pool" "test" {
-                name = "test" 
-                type = "dir"
-                target {
-                  path = "/var/lib/libvirt/images"
-                } 
-              }' >> test/main.tf
-              echo 'output "pool_id" { value = resource.libvirt_pool.test.id }' >> test/main.tf
-
-              cd test  # Move into the Terraform module directory
-
-              terraform init
-              terraform apply -auto-approve -target=data.libvirt_pool.default
-              terraform destroy -auto-approve -target=data.libvirt_pool.default
-              rm -rf test
-
-        - name: Apply Terraform Configuration
-          run: terraform apply -auto-approve
+              terraform apply -auto-approve
 
         - name: Setup Cluster
           run: |
