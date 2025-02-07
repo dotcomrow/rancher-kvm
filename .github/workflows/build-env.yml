@@ -96,9 +96,12 @@ jobs:
               provider "libvirt" { 
                 uri = "qemu+unix:///system?socket=/var/run/libvirt/libvirt-sock" 
               }' > test/main.tf
-              echo 'resource "libvirt_pool" "default" {
+              echo 'resource "libvirt_pool" "test" {
                 name = "test" 
-                type = "dir" 
+                type = "dir"
+                target {
+                  path = "/var/lib/libvirt/images"
+                } 
               }' >> test/main.tf
               echo 'output "pool_id" { value = resource.libvirt_pool.default.id }' >> test/main.tf
 
