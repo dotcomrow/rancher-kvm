@@ -69,8 +69,8 @@ jobs:
           provider "libvirt" { 
             uri = "qemu:///system" 
           } 
-          resource "libvirt_pool" "default" {
-            name = "default"
+          resource "libvirt_pool" "test" {
+            name = "test"
             type = "dir"
             path = "/tmp/test"
           }
