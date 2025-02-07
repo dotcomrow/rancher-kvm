@@ -58,7 +58,10 @@ jobs:
             eval $(ssh-agent -s)
             gpgconf --list-options gpg-agent | grep enable-ssh-support
             export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+            echo $SSH_AUTH_SOCK
             gpg-connect-agent updatestartuptty /bye
+            gpgconf --kill gpg-agent
+            gpg-agent --daemon
             ssh-add -L
             sudo ./setup.sh
 
