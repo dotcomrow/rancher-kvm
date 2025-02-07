@@ -54,7 +54,7 @@ jobs:
   
       - name: Build cluster
         run: |
-            eval "$(ssh-agent -s)"
+            source ~/.bashrc
             ssh-add -L
             terraform apply -auto-approve 
             sudo ./setup.sh
