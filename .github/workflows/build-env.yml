@@ -44,7 +44,7 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
+                
       - name: Terraform Init
         run: terraform init 
 
@@ -59,7 +59,7 @@ jobs:
             eval $(sudo gpg-agent --homedir /home/chris/.gnupg --daemon --enable-ssh-support)
             sudo chmod 777 $SSH_AUTH_SOCK
             echo $SSH_AUTH_SOCK
-            gpg-connect-agent updatestartuptty /bye
+            gpg-connect-agent reloadagent /bye
             ssh-add -L
             sudo ./setup.sh
 
