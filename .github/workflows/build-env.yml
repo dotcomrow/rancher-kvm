@@ -52,16 +52,13 @@ jobs:
         run: |
           terraform destroy -auto-approve
 
-      - name: Start SSH Agent
+      - name: Build cluster
         run: |
+            terraform apply -auto-approve 
             eval $(ssh-agent -s)
             gpg-connect-agent updatestartuptty /bye
             gpgconf --list-options gpg-agent | grep enable-ssh-support
             export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
             ssh-add -L
-  
-      - name: Build cluster
-        run: |
-            terraform apply -auto-approve 
             sudo ./setup.sh
 
