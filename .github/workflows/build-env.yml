@@ -103,7 +103,7 @@ jobs:
                   path = "/var/lib/libvirt/images"
                 } 
               }' >> test/main.tf
-              echo 'output "pool_id" { value = resource.libvirt_pool.default.id }' >> test/main.tf
+              echo 'output "pool_id" { value = resource.libvirt_pool.test.id }' >> test/main.tf
 
               cd test  # Move into the Terraform module directory
 
