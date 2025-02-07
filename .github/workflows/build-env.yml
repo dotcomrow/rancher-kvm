@@ -100,7 +100,7 @@ jobs:
                 name = "default" 
                 type = "dir" 
               }' >> test/main.tf
-              echo 'output "pool_id" { value = data.libvirt_pool.default.id }' >> test/main.tf
+              echo 'output "pool_id" { value = resource.libvirt_pool.default.id }' >> test/main.tf
 
               cd test  # Move into the Terraform module directory
 
