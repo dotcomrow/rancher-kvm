@@ -54,16 +54,11 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
         sleep 1;
     done
     echo "Waiting for SSH..."
-
-    ssh-add -L
-    $(whoami)
-    gpg --list-secret-keys
-
-    execute_with_retry "ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "resolvectl flush-caches; ssh -n $SSH_USER@$vm_name 'echo $vm_name'"
+    execute_with_retry "ssh-keyscan -H $vm_name >> ~/.ssh/known_hosts" "resolvectl flush-caches; ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$vm_name 'echo $vm_name'"
 
     execute_with_retry \
-        "ssh -n $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
-        "ssh -n $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
 
     echo "Adding host entry for $vm_name"
     
@@ -132,58 +127,58 @@ copy_certs_and_trust() {
     # Copy certificates with verification
     execute_with_retry \
         "scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:~/ca.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/ca.crt'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f ~/ca.crt'"
 
     execute_with_retry \
         "scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:~/ca.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/ca.key'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f ~/ca.key'"
 
     execute_with_retry \
         "scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:~/kube-apiserver.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/kube-apiserver.crt'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f ~/kube-apiserver.crt'"
 
     execute_with_retry \
         "scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:~/kube-apiserver.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/kube-apiserver.key'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f ~/kube-apiserver.key'"
 
     execute_with_retry \
         "scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:~/etcd-server.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/etcd-server.crt'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f ~/etcd-server.crt'"
 
     execute_with_retry \
         "scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:~/etcd-server.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/etcd-server.key'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f ~/etcd-server.key'"
 
     execute_with_retry \
         "scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:~/node.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/node.crt'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f ~/node.crt'"
 
     execute_with_retry \
         "scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:~/node.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/node.key'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f ~/node.key'"
 
     # Move certificates to RKE2 directory
     execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo mkdir -p /etc/rancher/rke2 && sudo cp ~/*.crt /etc/rancher/rke2/'" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.crt'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'sudo mkdir -p /etc/rancher/rke2 && sudo cp ~/*.crt /etc/rancher/rke2/'" \
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.crt'"
 
     execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo mkdir -p /etc/rancher/rke2 && sudo cp ~/*.key /etc/rancher/rke2/'" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.key'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'sudo mkdir -p /etc/rancher/rke2 && sudo cp ~/*.key /etc/rancher/rke2/'" \
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.key'"
 
     # Ensure correct permissions
     execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo chmod 600 /etc/rancher/rke2/*'" \
-        "ssh -n $SSH_USER@$NODE_IP 'ls -l /etc/rancher/rke2/'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'sudo chmod 600 /etc/rancher/rke2/*'" \
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'ls -l /etc/rancher/rke2/'"
 
     # Add CA to Ubuntu's trust store
     execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt'" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /usr/local/share/ca-certificates/custom-ca.crt'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt'" \
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'test -f /usr/local/share/ca-certificates/custom-ca.crt'"
 
     execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo update-ca-certificates'" \
-        "ssh -n $SSH_USER@$NODE_IP 'ls -al /etc/ssl/certs | grep custom-ca.crt'"
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'sudo update-ca-certificates'" \
+        "ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP 'ls -al /etc/ssl/certs | grep custom-ca.crt'"
 }
 
 # Function to install RKE2 on a node
@@ -192,12 +187,12 @@ install_rke2() {
     local NODE_TYPE=$2
     echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
 
-    ssh -n $SSH_USER@$NODE_IP "sudo mkdir -p /etc/rancher/rke2";
+    ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP "sudo mkdir -p /etc/rancher/rke2";
     
     copy_certs_and_trust  $NODE_IP
 
     # Create custom RKE2 config with custom certificates
-    ssh -n $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
+    ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
 cluster-domain: $RANCHER_DOMAIN
 
 node-label:
@@ -226,15 +221,15 @@ tls:
 EOF"
 
     if [ ! -z "$RKE2_TOKEN" ]; then
-        ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee -a /etc/rancher/rke2/config.yaml";
-        ssh -n $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
+        ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee -a /etc/rancher/rke2/config.yaml";
+        ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
     fi
 
     # Start RKE2
     if [[ "$NODE_TYPE" == "server" ]]; then
-        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server && sudo systemctl start rke2-server"
+        ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server && sudo systemctl start rke2-server"
     else
-        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent && sudo systemctl start rke2-agent"
+        ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent && sudo systemctl start rke2-agent"
     fi
 }
 
@@ -246,7 +241,7 @@ CONTROL_NODE_PATTERN="ctrl-node-"
 WORKER_NODE_PATTERN="work-node-"
 
 install_rke2 "$RANCHER_MASTER" "server";
-RKE2_TOKEN=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token");
+RKE2_TOKEN=$(ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token");
 
 while IFS= read -r NODE; do
     if [ "$NODE" == "$RANCHER_MASTER" ]; then
@@ -275,19 +270,19 @@ done < <(virsh list --all | awk '/running/ && $2 ~ /'"$WORKER_NODE_PATTERN"'/ {p
 
 # Step 5: Validate Cluster Setup
 echo "Verifying cluster status..."
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes"
 
 # Step 6: Install Cert-Manager for Rancher
 echo "Installing Cert-Manager for TLS certificates..."
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/cert-manager -n cert-manager"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/cert-manager-webhook -n cert-manager"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/cert-manager -n cert-manager"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/cert-manager-webhook -n cert-manager"
 
 echo "Cert-Manager installed successfully!"
 
 # installing metallb
 echo "Installing MetalLB..."
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.10/config/manifests/metallb-native.yaml"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.10/config/manifests/metallb-native.yaml"
 
 echo "Waiting for MetalLB Webhook Service to be ready..."
 
@@ -297,10 +292,10 @@ while true; do
     echo "Checking MetalLB components..."
 
     # Check if all MetalLB pods are running
-    PODS_READY=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n metallb-system --no-headers | grep -E 'controller|speaker|webhook-service' | awk '{print \$3}' | grep -v Running | wc -l")
+    PODS_READY=$(ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n metallb-system --no-headers | grep -E 'controller|speaker|webhook-service' | awk '{print \$3}' | grep -v Running | wc -l")
     
     # Check if webhook-service has endpoints
-    WEBHOOK_READY=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get endpoints -n metallb-system webhook-service -o jsonpath='{.subsets}' | grep -Eo 'addresses' | wc -l")
+    WEBHOOK_READY=$(ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get endpoints -n metallb-system webhook-service -o jsonpath='{.subsets}' | grep -Eo 'addresses' | wc -l")
     
     if [[ "$PODS_READY" -eq 0 && "$WEBHOOK_READY" -gt 0 ]]; then
         echo "✅ MetalLB is fully ready!"
@@ -316,7 +311,7 @@ echo "✅ MetalLB Webhook is ready!"
 # Configuring MetalLB
 echo "Configuring MetalLB..."
 
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
@@ -338,34 +333,34 @@ EOF"
 
 BOOTSTRAP_PWD=$(openssl rand -base64 12)
 echo "Deploying Rancher UI on RKE2 cluster..."
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace cattle-system"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm install rancher rancher-stable/rancher --namespace cattle-system --kubeconfig /etc/rancher/rke2/rke2.yaml --set hostname=$RANCHER_HOSTNAME.$RANCHER_DOMAIN --set bootstrapPassword=$BOOTSTRAP_PWD --set ingress.tls.source=letsEncrypt --set letsEncrypt.email=administrator@$RANCHER_DOMAIN --set letsEncrypt.ingress.class=traefik"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace cattle-system"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo helm install rancher rancher-stable/rancher --namespace cattle-system --kubeconfig /etc/rancher/rke2/rke2.yaml --set hostname=$RANCHER_HOSTNAME.$RANCHER_DOMAIN --set bootstrapPassword=$BOOTSTRAP_PWD --set ingress.tls.source=letsEncrypt --set letsEncrypt.email=administrator@$RANCHER_DOMAIN --set letsEncrypt.ingress.class=traefik"
 
 # Step 8: Wait for Rancher to Deploy
 echo "Waiting for Rancher deployment to complete..."
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/rancher -n cattle-system"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc rancher -n cattle-system --type='merge' -p '{\"spec\": {\"loadBalancerIP\": \"10.0.0.110\"}}'"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml expose deployment rancher -n cattle-system --type=LoadBalancer --name=rancher-service --port=443"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=available --timeout=600s deployment/rancher -n cattle-system"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc rancher -n cattle-system --type='merge' -p '{\"spec\": {\"loadBalancerIP\": \"10.0.0.110\"}}'"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml expose deployment rancher -n cattle-system --type=LoadBalancer --name=rancher-service --port=443"
 
 # Verify installation
 echo "Verifying cluster and Rancher status..."
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n cattle-system"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n cattle-system"
 
 # add longhorn
 echo "Adding Longhorn storage..."
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml"
 
 echo "Bootstrap password is:"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get secret -n cattle-system bootstrap-secret -o go-template='{{.data.bootstrapPassword|base64decode}}{{ \"\n\" }}'"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get secret -n cattle-system bootstrap-secret -o go-template='{{.data.bootstrapPassword|base64decode}}{{ \"\n\" }}'"
 
 # Add kubernetes-dashboard repository
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/"
 # Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard -n kubernetes-dashboard --kubeconfig /etc/rancher/rke2/rke2.yaml"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard -n kubernetes-dashboard --kubeconfig /etc/rancher/rke2/rke2.yaml"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
 
 # configure github oidc
 # Load GitHub OAuth credentials from config file
@@ -386,7 +381,7 @@ if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_ORG" ]
     exit 1
 fi
 
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: management.cattle.io/v3
 kind: AuthConfig
 metadata:
@@ -406,9 +401,9 @@ scopes:
   - 'read:org'
 EOF"
 
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment rancher -n cattle-system"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment rancher -n cattle-system"
 
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: management.cattle.io/v3
 kind: OIDCClient
 metadata:
@@ -426,11 +421,11 @@ spec:
     - 'groups'
 EOF"
 
-OIDC_CLIENT=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get oidcclient -n cattle-system -o jsonpath=\"{.spec.clientID}\"")
-OIDC_SECRET=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get secret -n cattle-system -o jsonpath=\"{.data.clientSecret}\" | base64 --decode")
+OIDC_CLIENT=$(ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get oidcclient -n cattle-system -o jsonpath=\"{.spec.clientID}\"")
+OIDC_SECRET=$(ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get secret -n cattle-system -o jsonpath=\"{.data.clientSecret}\" | base64 --decode")
 
 # configure oidc for kubernetes-dashboard
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -448,10 +443,10 @@ data:
   oidc-extra-params: prompt=consent
 EOF"
 
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard"
 
 
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -472,10 +467,10 @@ subjects:
   namespace: kubernetes-dashboard
 EOF"
 
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n cattle-system create token admin-user"
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n cattle-system create token admin-user"
 
 # create longhorn storage classes
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+ssh -n -i ~/.ssh/id_rsa.pub $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:

@@ -54,8 +54,6 @@ jobs:
   
       - name: Build cluster
         run: |
-            source ~/.bashrc
-            ssh-add -L
             terraform apply -auto-approve 
             sudo ./setup.sh
 
