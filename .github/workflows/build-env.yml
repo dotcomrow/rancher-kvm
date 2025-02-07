@@ -55,10 +55,9 @@ jobs:
       - name: Build cluster
         run: |
             terraform apply -auto-approve 
-            eval $(ssh-agent -s)
-            gpgconf --list-options gpg-agent | grep enable-ssh-support
             sudo killall gpg-agent || true
-            eval $(sudo gpg-agent --homedir /root/.gnupg --daemon --enable-ssh-support)
+            sudo eval $(ssh-agent -s)
+            sudo eval $(sudo gpg-agent --homedir /root/.gnupg --daemon --enable-ssh-support)
             echo $SSH_AUTH_SOCK
             sudo gpg-connect-agent updatestartuptty /bye
             ssh-add -L
