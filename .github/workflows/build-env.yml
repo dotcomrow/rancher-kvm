@@ -33,6 +33,7 @@ jobs:
                       name = "k8s-cluster" 
                   } 
               } 
+              execution_mode = "local"
           }
           EOF
 
