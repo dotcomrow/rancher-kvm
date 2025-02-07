@@ -4,7 +4,7 @@
 DOMAIN="k8s.suncoast.systems"
 EMAIL="administrator@suncoast.systems"
 CERTBOT_CERT_DIR="/etc/letsencrypt/live/$DOMAIN"
-CERT_DIR="./certs"
+CERT_DIR=$1
 rm -rf "$CERT_DIR"
 mkdir -p "$CERT_DIR"
 
