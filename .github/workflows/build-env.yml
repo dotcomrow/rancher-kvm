@@ -81,8 +81,8 @@ jobs:
 
           cd test
           terraform init
-          terraform apply -auto-approve -target=libvirt_pool.test
-          terraform destroy -auto-approve -target=libvirt_pool.test
+          terraform apply -target=libvirt_pool.test -auto-approve | tee terraform-debug.log
+          terraform destroy -target=libvirt_pool.test -auto-approve | tee terraform-debug.log
           cd ..
           rm -rf test
 
