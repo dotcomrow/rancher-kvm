@@ -57,7 +57,9 @@ jobs:
             terraform apply -auto-approve 
             eval $(ssh-agent -s)
             gpgconf --list-options gpg-agent | grep enable-ssh-support
-            export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+            sudo gpgconf --kill gpg-agent
+            sudo gpg-agent --daemon --homedir /root/.gnupg
+            export SSH_AUTH_SOCK=$(sudo gpgconf --list-dirs agent-ssh-socket)
             echo $SSH_AUTH_SOCK
             gpg-connect-agent updatestartuptty /bye
             ssh-add -L
