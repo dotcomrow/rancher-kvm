@@ -16,13 +16,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Verify Libvirt Connection
-        run: |
-          echo "Checking libvirt socket..."
-          ls -l /var/run/libvirt/libvirt-sock
-          echo "Testing virsh connection..."
-          virsh -c qemu:///system list --all
-
       - name: Setup Terraform Backend
         run: |
           cat > backend.tf << EOF
@@ -55,53 +48,11 @@ jobs:
       - name: Terraform Init
         run: terraform init 
 
-      - name: Debug Libvirt Provider
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+  
+      - name: Build cluster
         run: |
-          export TF_LOG=DEBUG
-          mkdir -p test
-          cat > test/main.tf << EOF
-          terraform { 
-            required_providers { 
-              libvirt = { 
-                source = "dmacvicar/libvirt"
-              } 
-            } 
-          } 
-          provider "libvirt" { 
-            uri = "qemu:///system" 
-          } 
-          resource "libvirt_pool" "test" {
-            name = "test"
-            type = "dir"
-            target {
-              path = "/tmp/test"
-            }
-          }
-          output "pool_id" { value = libvirt_pool.test.id }
-          EOF
+            terraform apply -auto-approve 
+            sudo ./setup.sh
 
-          cd test
-          terraform init
-          terraform apply -target=libvirt_pool.test -auto-approve | tee terraform-debug.log
-          terraform destroy -target=libvirt_pool.test -auto-approve | tee terraform-debug.log
-          cd ..
-          rm -rf test
-
-      - name: Check Libvirt Service Before Apply
-        run: |
-            systemctl status libvirtd || sudo systemctl restart libvirtd
-            ls -l /var/run/libvirt/libvirt-sock
-  
-      - name: Fix Libvirt Socket Permissions
-        run: |
-            sudo chmod 777 /var/run/libvirt/libvirt-sock
-            ls -l /var/run/libvirt/libvirt-sock
-  
-      - name: Verify Libvirt Before Terraform Apply
-        run: |
-            virsh -c qemu:///system list --all
-  
-      - name: Terraform Apply with Debug Logs
-        run: |
-            export TF_LOG=DEBUG
-            terraform apply -auto-approve | tee terraform-debug.log
