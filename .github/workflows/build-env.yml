@@ -56,8 +56,8 @@ jobs:
         run: |
             terraform apply -auto-approve 
             sudo killall gpg-agent || true
-            sudo eval $(ssh-agent -s)
-            sudo eval $(sudo gpg-agent --homedir /root/.gnupg --daemon --enable-ssh-support)
+            eval $(ssh-agent -s)
+            eval $(sudo gpg-agent --homedir /root/.gnupg --daemon --enable-ssh-support)
             echo $SSH_AUTH_SOCK
             sudo gpg-connect-agent updatestartuptty /bye
             ssh-add -L
