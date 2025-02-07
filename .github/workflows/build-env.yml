@@ -72,9 +72,11 @@ jobs:
           resource "libvirt_pool" "test" {
             name = "test"
             type = "dir"
-            path = "/tmp/test"
+            target {
+              path = "/tmp/test"
+            }
           }
-          output "pool_id" { value = libvirt_pool.default.id }
+          output "pool_id" { value = libvirt_pool.test.id }
           EOF
 
           cd test
