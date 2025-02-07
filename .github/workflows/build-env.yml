@@ -56,7 +56,8 @@ jobs:
         run: |
             eval $(ssh-agent -s)
             gpg-connect-agent updatestartuptty /bye
-            ssh-add ~/.gnupg/private-keys-v1.d/C1A0AA21A76EAFE63B176F58C33CFF9F98CA9AAD.key
+            gpgconf --list-options gpg-agent | grep enable-ssh-support
+            export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
   
       - name: Build cluster
         run: |
