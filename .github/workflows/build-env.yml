@@ -56,6 +56,8 @@ jobs:
         run: |
             source ~/.bashrc
             gpg-connect-agent reloadagent /bye
+            echo $SSH_AUTH_SOCK
+            ls -al $SSH_AUTH_SOCK
             ssh-add -L
             terraform apply -auto-approve 
             # PIDS=$(ps -aef | grep "[g]pg-agent" | awk '{print $2}'); [[ -n "$PIDS" ]] && echo "Found gpg-agent running with PIDs: $PIDS" && sudo kill -KILL $PIDS 2>/dev/null || true && sleep 1 && PIDS_REMAINING=$(ps -aef | grep "[g]pg-agent" | awk '{print $2}') && [[ -z "$PIDS_REMAINING" ]] && echo "✅ gpg-agent successfully terminated." || echo "⚠️ Some gpg-agent processes are still running: $PIDS_REMAINING" || echo "✅ No gpg-agent processes found running."
