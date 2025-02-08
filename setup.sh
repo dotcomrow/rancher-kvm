@@ -96,7 +96,7 @@ verify_certs() {
 # Run verification, if it fails, regenerate certs
 if ! verify_certs; then
     echo "⚠️ Verification failed! Regenerating certificates..."
-    ./generate-certs.sh $CERT_DIR
+    sudo ./generate-certs.sh $CERT_DIR
 
     # Re-run verification after regeneration
     if ! verify_certs; then
