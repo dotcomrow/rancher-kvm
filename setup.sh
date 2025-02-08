@@ -361,6 +361,7 @@ EOF
 
 # Add kubernetes-dashboard repository
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
 # Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard --kubeconfig /etc/rancher/rke2/rke2.yaml"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
@@ -407,9 +408,34 @@ scopes:
   - 'read:org'
 EOF"
 
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: github-org-cluster-admins
+subjects:
+  - kind: Group
+    name: "github_org:$GITHUB_ORG"  # Replace with your GitHub Org ID
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+EOF"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: management.cattle.io/v3
+kind: ClusterRoleTemplateBinding
+metadata:
+  name: github-org-cluster-owner
+  namespace: local  # Change this if your cluster name is different
+clusterName: local  # Change this if your cluster name is different
+groupName: "github_org:$GITHUB_ORG"  # Replace with your GitHub Org ID
+roleTemplateName: cluster-owner
+EOF"
+
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch settings.management.cattle.io first-login --type='merge' -p '{\"value\": \"admin\"}'"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment rancher -n cattle-system"
-
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: management.cattle.io/v3
