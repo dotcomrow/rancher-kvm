@@ -54,8 +54,6 @@ jobs:
 
       - name: Build cluster
         run: |
-            source ~/.bashrc
-            gpg-connect-agent reloadagent /bye
             echo $SSH_AUTH_SOCK
             ls -al $SSH_AUTH_SOCK
             ssh-add -L
