@@ -69,7 +69,7 @@ jobs:
             # echo "GPG Agent Socket: $GPG_AGENT_SOCK"
             # gpg-connect-agent -S "$GPG_AGENT_SOCK" reloadagent /bye
             whoami
-            
+            source ~/.bashrc
             ssh-add -L
             sudo ./setup.sh
 
