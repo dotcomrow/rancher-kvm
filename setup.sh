@@ -48,9 +48,9 @@ execute_with_retry() {
 }
 
 # iterate over machines and add host entries to hosts file using qemu guest agent
-virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
+sudo virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     echo "Adding host entry for $vm_name"
-    while ! grep -q "ens3" <(virsh domifaddr $vm_name --source agent 2>&1); do
+    while ! grep -q "ens3" <(sudo virsh domifaddr $vm_name --source agent 2>&1); do
         sleep 1;
     done
     echo "Waiting for SSH..."
@@ -64,7 +64,7 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     
 done
 
-CERT_DIR="/root/certs"
+CERT_DIR="/home/chris/certs"
 EXPECTED_CERTS=(
     "$CERT_DIR/ca.crt"
     "$CERT_DIR/ca.key"
