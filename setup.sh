@@ -391,12 +391,13 @@ metadata:
   name: github
   namespace: cattle-system
 enabled: true
-displayName: 'GitHub Authentication'
+displayName: GitHub Authentication
 clientId: '$GITHUB_CLIENT_ID'
 clientSecret: '$GITHUB_CLIENT_SECRET'
 hostname: 'github.com'
 tls: true
 type: githubConfig
+logoutAllSupported: false
 rancherUrl: 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN'
 allowedPrincipalIds:
   - 'github_org:$GITHUB_ORG'  # Restrict access to a GitHub org 
@@ -406,7 +407,9 @@ scopes:
   - 'read:org'
 EOF"
 
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch settings.management.cattle.io first-login --type='merge' -p '{\"value\": \"admin\"}'"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment rancher -n cattle-system"
+
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: management.cattle.io/v3
