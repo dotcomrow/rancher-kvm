@@ -54,6 +54,7 @@ jobs:
 
       - name: Build cluster
         run: |
+            sudo /bin/bash
             echo $SSH_AUTH_SOCK
             ls -al $SSH_AUTH_SOCK
             ssh-add -L
