@@ -1,5 +1,8 @@
 name: Build RKE2 Cloud
-
+defaults:
+  run:
+    shell: bash -ieo pipefail {0}
+    
 on:
   push:
     branches:
@@ -54,8 +57,12 @@ jobs:
 
       - name: Build cluster
         run: |
+            echo $(pwd)
             sudo /bin/bash
+            echo $(pwd)
             echo $SSH_AUTH_SOCK
+
+
             ls -al $SSH_AUTH_SOCK
             ssh-add -L
             terraform apply -auto-approve 
