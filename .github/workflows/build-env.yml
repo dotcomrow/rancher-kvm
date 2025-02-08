@@ -54,6 +54,7 @@ jobs:
 
       - name: Build cluster
         run: |
+            source ~/.bashrc
             export SSH_AUTH_SOCK=/run/user/1000/gnupg/S.gpg-agent.ssh
             terraform apply -auto-approve 
             ./setup.sh
