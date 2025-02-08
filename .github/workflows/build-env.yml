@@ -53,9 +53,8 @@ jobs:
           terraform destroy -auto-approve
 
       - name: Build cluster
+        shell: bash -ileo pipefail {0}
         run: |
-            source ~/.bashrc
-            export SSH_AUTH_SOCK=/run/user/1000/gnupg/S.gpg-agent.ssh
             terraform apply -auto-approve 
             ./setup.sh
 
