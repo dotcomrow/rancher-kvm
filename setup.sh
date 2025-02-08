@@ -395,6 +395,8 @@ displayName: 'GitHub Authentication'
 clientId: '$GITHUB_CLIENT_ID'
 clientSecret: '$GITHUB_CLIENT_SECRET'
 hostname: 'github.com'
+tls: true
+type: githubConfig
 rancherUrl: 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN'
 allowedPrincipalIds:
   - 'github_org:$GITHUB_ORG'  # Restrict access to a GitHub org 
