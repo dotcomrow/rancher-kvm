@@ -55,7 +55,6 @@ jobs:
       - name: Build cluster
         run: |
             source ~/.bashrc
-            ssh-add -L
             gpg-connect-agent updatestartuptty /bye
             ssh-add -L
             terraform apply -auto-approve 
