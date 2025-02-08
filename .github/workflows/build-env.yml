@@ -68,6 +68,8 @@ jobs:
             # GPG_AGENT_SOCK=$(gpgconf --list-dirs agent-socket)
             # echo "GPG Agent Socket: $GPG_AGENT_SOCK"
             # gpg-connect-agent -S "$GPG_AGENT_SOCK" reloadagent /bye
+            whoami
+            
             ssh-add -L
             sudo ./setup.sh
 
