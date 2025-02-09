@@ -353,18 +353,65 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rk
 echo "Adding Longhorn storage..."
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml"
 
-BOOTSTRAP_CREDS=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get secret -n cattle-system bootstrap-secret -o go-template='{{.data.bootstrapPassword|base64decode}}{{ \"\n\" }}'")
-# write creds to file
-sudo tee ~/rancher-creds > /dev/null <<EOF
-GUI CREDS: $BOOTSTRAP_CREDS
-EOF
-
 # Add kubernetes-dashboard repository
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
 # Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard --kubeconfig /etc/rancher/rke2/rke2.yaml"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add dex https://charts.dexidp.io"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
+
+RANDOM_SECRET=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo)
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo helm upgrade --install dex dex/dex --namespace dex --create-namespace  --kubeconfig /etc/rancher/rke2/rke2.yaml -f -
+config:
+  issuer: https://dex.$RANCHER_DOMAIN    # The external URL where Dex will be reachable
+  enablePasswordDB: false
+  oauth2:
+    skipApprovalScreen: true
+
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+
+  connectors:
+    - type: github
+      id: github
+      name: "GitHub"
+      config:
+        clientID: "$GITHUB_CLIENT_ID"
+        clientSecret: "$GITHUB_CLIENT_SECRET"
+        orgs:
+          - name: "$GITHUB_ORG"
+        loadAllGroups: true
+
+  staticClients:
+    - id: kubernetes-dashboard
+      name: "Kubernetes Dashboard"
+      redirectURIs:
+        - "https://dashboard.$RANCHER_DOMAIN/oauth2/callback"
+      secret: "$RANDOM_SECRET"
+
+service:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.0.113   # Tells the LB to use this IP (depends on your LB solution)
+  port: 5556                   # Dex's HTTP port (default in this chart is 5556)
+  annotations: {}              # If you need LB-specific annotations (e.g. for cloud load balancers), add them here.
+
+ingress:
+  enabled: false
+
+replicaCount: 1
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+EOF"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard --kubeconfig /etc/rancher/rke2/rke2.yaml --set dashboard.args=\"{--enable-insecure-login=false,--authentication-mode=oidc,--oidc-issuer-url=https://dex.$RANCHER_DOMAIN,--oidc-client-id=kubernetes-dashboard,--oidc-secret=$RANDOM_SECRET,--oidc-groups-claim=groups}\""
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard"
 
 # configure github oidc
 # Load GitHub OAuth credentials from config file
@@ -380,7 +427,7 @@ fi
 source "$CONFIG_FILE"
 
 # Ensure required variables are set
-if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_AUTH_VAL" ]]; then
+if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_AUTH_VAL" || -z "$GITHUB_ORG" || -z "$GITHUB_TEAM" ]]; then
     echo "❌ ERROR: Missing required variables in $CONFIG_FILE!"
     exit 1
 fi
@@ -446,6 +493,14 @@ scopes:
   - 'read:org'
 EOF"
 
+ssh -n "$SSH_USER@$RANCHER_MASTER" "
+  sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml \
+    get users.management.cattle.io \
+    -o jsonpath='{range .items[*]}{.metadata.name}{\"\\n\"}{end}' |
+  xargs -I {} sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml \
+    delete users.management.cattle.io {}
+"
+
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch settings.management.cattle.io first-login --type='merge' -p '{\"value\": \"admin\"}'"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment rancher -n cattle-system"
 
@@ -474,30 +529,6 @@ metadata:
   name: auth-provider
 value: github
 EOF"
-
-OIDC_CLIENT=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get oidcclient -n cattle-system -o jsonpath=\"{.spec.clientID}\"")
-OIDC_SECRET=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get secret -n cattle-system -o jsonpath=\"{.data.clientSecret}\" | base64 --decode")
-
-# configure oidc for kubernetes-dashboard
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kubernetes-dashboard-settings
-  namespace: kubernetes-dashboard
-data:
-  # Enable OIDC Authentication
-  enable-insecure-login: 'false'
-  authentication-mode: oidc
-  oidc-client-id: $OIDC_CLIENT
-  oidc-client-secret: $OIDC_SECRET
-  oidc-issuer-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/v3/oidc
-  oidc-redirect-url: https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/oauth2/callback
-  oidc-scopes: openid profile email groups
-  oidc-extra-params: prompt=consent
-EOF"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard"
 
 # create longhorn storage classes
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
