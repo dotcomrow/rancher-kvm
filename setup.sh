@@ -380,10 +380,48 @@ fi
 source "$CONFIG_FILE"
 
 # Ensure required variables are set
-if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_ORG" ]]; then
+if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_ORG" || -z "$GITHUB_TEAM" ]]; then
     echo "❌ ERROR: Missing required variables in $CONFIG_FILE!"
     exit 1
 fi
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: management.cattle.io/v3
+kind: GlobalRoleBinding
+metadata:
+  name: github-k8s-cluster-admins
+  labels:
+    auth-provider: github
+globalRoleName: admin
+groupPrincipalName: 'github_team:$GITHUB_ORG:$GITHUB_TEAM'
+EOF"
+
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: github-team-cluster-admins
+subjects:
+  - kind: Group
+    name: 'github_team:$GITHUB_ORG:$GITHUB_TEAM'  # Replace with your team
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+EOF"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: management.cattle.io/v3
+kind: ClusterRoleTemplateBinding
+metadata:
+  name: github-team-cluster-owner
+  namespace: local            # Adjust if your cluster name is different
+clusterName: local            # Adjust if your cluster name is different
+groupName: 'github_team:$GITHUB_ORG:$GITHUB_TEAM'
+roleTemplateName: cluster-owner
+EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: management.cattle.io/v3
@@ -401,37 +439,11 @@ type: githubConfig
 logoutAllSupported: false
 rancherUrl: 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN'
 allowedPrincipalIds:
-  - 'github_org:$GITHUB_ORG'  # Restrict access to a GitHub org 
+  - 'github_team:$GITHUB_ORG:$GITHUB_TEAM'
 scopes:
   - 'read:user'
   - 'user:email'
   - 'read:org'
-EOF"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: github-org-cluster-admins
-subjects:
-  - kind: Group
-    name: "github_org:$GITHUB_ORG"  # Replace with your GitHub Org ID
-    apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
-EOF"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: management.cattle.io/v3
-kind: ClusterRoleTemplateBinding
-metadata:
-  name: github-org-cluster-owner
-  namespace: local  # Change this if your cluster name is different
-clusterName: local  # Change this if your cluster name is different
-groupName: "github_org:$GITHUB_ORG"  # Replace with your GitHub Org ID
-roleTemplateName: cluster-owner
 EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch settings.management.cattle.io first-login --type='merge' -p '{\"value\": \"admin\"}'"
@@ -453,6 +465,14 @@ spec:
     - 'profile'
     - 'email'
     - 'groups'
+EOF"
+
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+apiVersion: management.cattle.io/v3
+kind: Setting
+metadata:
+  name: auth-provider
+value: github
 EOF"
 
 OIDC_CLIENT=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  get oidcclient -n cattle-system -o jsonpath=\"{.spec.clientID}\"")
@@ -478,33 +498,6 @@ data:
 EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard"
-
-
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: admin-user
-  namespace: cattle-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: admin-user
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: admin-user
-  namespace: kubernetes-dashboard
-EOF"
-
-ADMIN_TOKEN=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n cattle-system create token admin-user")
-sudo tee -a ~/rancher-creds > /dev/null <<EOF
-ADMIN TOKEN: $ADMIN_TOKEN
-EOF
 
 # create longhorn storage classes
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
