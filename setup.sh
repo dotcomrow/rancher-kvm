@@ -380,7 +380,7 @@ fi
 source "$CONFIG_FILE"
 
 # Ensure required variables are set
-if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_ORG" || -z "$GITHUB_TEAM" ]]; then
+if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_AUTH_VAL" ]]; then
     echo "❌ ERROR: Missing required variables in $CONFIG_FILE!"
     exit 1
 fi
@@ -393,7 +393,7 @@ metadata:
   labels:
     auth-provider: github
 globalRoleName: admin
-groupPrincipalName: 'github_team:$GITHUB_ORG:$GITHUB_TEAM'
+groupPrincipalName: 'github_team:$GITHUB_AUTH_VAL'
 EOF"
 
 
@@ -404,7 +404,7 @@ metadata:
   name: github-team-cluster-admins
 subjects:
   - kind: Group
-    name: 'github_team:$GITHUB_ORG:$GITHUB_TEAM'  # Replace with your team
+    name: 'github_team:$GITHUB_AUTH_VAL'  # Replace with your team
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
@@ -419,7 +419,7 @@ metadata:
   name: github-team-cluster-owner
   namespace: local            # Adjust if your cluster name is different
 clusterName: local            # Adjust if your cluster name is different
-groupName: 'github_team:$GITHUB_ORG:$GITHUB_TEAM'
+groupName: 'github_team:$GITHUB_AUTH_VAL'
 roleTemplateName: cluster-owner
 EOF"
 
@@ -439,7 +439,7 @@ type: githubConfig
 logoutAllSupported: false
 rancherUrl: 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN'
 allowedPrincipalIds:
-  - 'github_team:$GITHUB_ORG:$GITHUB_TEAM'
+  - 'github_team:$GITHUB_AUTH_VAL'
 scopes:
   - 'read:user'
   - 'user:email'
