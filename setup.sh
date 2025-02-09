@@ -361,7 +361,7 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add dex https://charts.dexidp.io"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
 
-RANDOM_SECRET=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo)
+RANDOM_SECRET="$(openssl rand -base64 10 | tr -dc 'A-Za-z0-9' | head -c 13)"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo helm upgrade --install dex dex/dex --namespace dex --create-namespace  --kubeconfig /etc/rancher/rke2/rke2.yaml -f -
 config:
@@ -503,24 +503,6 @@ ssh -n "$SSH_USER@$RANCHER_MASTER" "
 
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch settings.management.cattle.io first-login --type='merge' -p '{\"value\": \"admin\"}'"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment rancher -n cattle-system"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: management.cattle.io/v3
-kind: OIDCClient
-metadata:
-  name: kubernetes-dashboard
-  namespace: kubernetes-dashboard
-spec:
-  displayName: 'Kubernetes Dashboard OIDC Client'
-  allowedPrincipalIds: []  # Restrict access if needed, leave empty for all Rancher users
-  redirectURIs:
-    - 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN/oauth2/callback'
-  scopes:
-    - 'openid'
-    - 'profile'
-    - 'email'
-    - 'groups'
-EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: management.cattle.io/v3
