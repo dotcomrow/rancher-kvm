@@ -14,8 +14,13 @@ variable "VM_USER" {
   type    = string
 }
 
+variable "UBUNTU_VERSION" {
+  default = "24.04"
+  type    = string
+}
+
 variable "VM_IMG_PATH" {
-  default = "/home/chris/isos/ubuntu-24.04-server-cloudimg-amd64.img"
+  default = "https://cloud-images.ubuntu.com/releases/${var.UBUNTU_VERSION}/release/ubuntu-${var.UBUNTU_VERSION}-server-cloudimg-amd64.img"
   type    = string
 }
 
