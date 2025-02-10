@@ -361,7 +361,11 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add dex https://charts.dexidp.io"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
 
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add oauth2-proxy https://oauth2-proxy.github.io/manifests"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo update"
+
 RANDOM_SECRET="$(openssl rand -base64 10 | tr -dc 'A-Za-z0-9' | head -c 13)"
+echo "$RANDOM_SECRET" > ~/oauth2-proxy-secret.txt
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo helm upgrade --install dex dex/dex --namespace dex --create-namespace  --kubeconfig /etc/rancher/rke2/rke2.yaml -f -
 config:
@@ -390,8 +394,13 @@ config:
     - id: kubernetes-dashboard
       name: "Kubernetes Dashboard"
       redirectURIs:
-        - "https://dashboard.$RANCHER_DOMAIN/oauth2/callback"
+        - "https://dashboard.$RANCHER_DOMAIN/#/auth/oidc/callback"
       secret: "$RANDOM_SECRET"
+      scopes:
+        - openid
+        - email
+        - profile
+        - groups
 
 service:
   type: LoadBalancer
@@ -409,9 +418,7 @@ resources:
     memory: 100Mi
 EOF"
 
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard --kubeconfig /etc/rancher/rke2/rke2.yaml --set dashboard.args=\"{--enable-insecure-login=false,--authentication-mode=oidc,--oidc-issuer-url=https://dex.$RANCHER_DOMAIN,--oidc-client-id=kubernetes-dashboard,--oidc-secret=$RANDOM_SECRET,--oidc-groups-claim=groups}\""
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard --type='merge' -p '{\"spec\": {\"type\": \"LoadBalancer\", \"loadBalancerIP\": \"10.0.0.111\"}}'"
-ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard"
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard --kubeconfig /etc/rancher/rke2/rke2.yaml"
 
 # configure github oidc
 # Load GitHub OAuth credentials from config file
@@ -504,6 +511,9 @@ ssh -n "$SSH_USER@$RANCHER_MASTER" "
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml patch settings.management.cattle.io first-login --type='merge' -p '{\"value\": \"admin\"}'"
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment rancher -n cattle-system"
 
+ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml create namespace ingress-nginx"
+
+
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 apiVersion: management.cattle.io/v3
 kind: Setting
@@ -549,3 +559,72 @@ provisioner: kubernetes.io/no-provisioner
 volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Delete
 EOF"
+
+
+
+
+# ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml  apply -f -
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ingress-nginx-controller
+#   namespace: ingress-nginx
+# spec:
+#   type: LoadBalancer
+#   loadBalancerIP: 10.0.0.114  # Example IP from your MetalLB pool
+#   ports:
+#     - port: 80
+#       name: http
+#       targetPort: 80
+#     - port: 443
+#       name: https
+#       targetPort: 443
+#   selector:
+#     app.kubernetes.io/name: ingress-nginx
+# EOF"
+
+# ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo helm upgrade --install oauth2-proxy oauth2-proxy/oauth2-proxy --namespace oauth2-proxy --create-namespace  --kubeconfig /etc/rancher/rke2/rke2.yaml -f -
+# # values-oauth2-proxy.yaml
+
+# # Use Dex as the provider (generic OIDC)
+# config:
+#   clientID: "kubernetes-dashboard"
+#   clientSecret: "$RANDOM_SECRET"           # must match Dex's staticClients[].secret
+#   cookieSecret: "REDACTED_32bytes"      # random 32-byte key for oauth2-proxy cookies
+#   provider: "oidc"
+#   providerConfig:
+#     oidcIssuerURL: "https://dex.$RANCHER_DOMAIN"
+#     oidcScopes:
+#       - openid
+#       - profile
+#       - email
+#   # "email_verified" might need to be turned off or replaced depending on Dex claims
+#   # But let's keep it minimal.
+
+# extraArgs:
+#   # The upstream to protect is the Kubernetes Dashboard
+#   - --upstream=https://kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local
+#     # or "https://..." if the dashboard enforces TLS. 
+#     # If the dashboard only listens on 443, you might need to skip TLS verify or 
+#     # handle internal CA certificates.
+
+#   # If Dex has a self-signed or custom CA, skip TLS verify or mount the CA 
+#   - --ssl-insecure-skip-verify
+
+# # Service config - expose on port 443 or 80
+# service:
+#   type: ClusterIP
+
+# ingress:
+#   enabled: true
+#   annotations:
+#     kubernetes.io/ingress.class: "nginx"
+#   hosts:
+#     - dashboard.$RANCHER_DOMAIN
+#   tls:
+#     - secretName: dashboard-tls
+#       hosts:
+#         - dashboard.$RANCHER_DOMAIN
+# EOF"
+
+# ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml rollout restart deployment -n kubernetes-dashboard"
