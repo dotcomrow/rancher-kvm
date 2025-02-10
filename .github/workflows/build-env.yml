@@ -52,6 +52,11 @@ jobs:
         run: |
           terraform destroy -auto-approve
 
+      - name: Prepare Configs
+        shell: bash -ileo pipefail {0}
+        run: |
+          ./prepare.sh
+
       - name: Build cluster
         shell: bash -ileo pipefail {0}
         run: |
