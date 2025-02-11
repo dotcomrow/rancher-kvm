@@ -101,6 +101,8 @@ if ! verify_certs; then
     # Re-run verification after regeneration
     if ! verify_certs; then
         echo "❌ ERROR: Certificate verification failed after regeneration!"
+        cd $CERT_DIR
+        echo "$(pwd)"
         exit 1
     fi
 fi
