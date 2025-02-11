@@ -48,9 +48,9 @@ execute_with_retry() {
 }
 
 # iterate over machines and add host entries to hosts file using qemu guest agent
-sudo virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
+virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     echo "Adding host entry for $vm_name"
-    while ! grep -q "ens3" <(sudo virsh domifaddr $vm_name --source agent 2>&1); do
+    while ! grep -q "ens3" <(virsh domifaddr $vm_name --source agent 2>&1); do
         sleep 1;
     done
     echo "Waiting for SSH..."
@@ -96,8 +96,8 @@ verify_certs() {
 # Run verification, if it fails, regenerate certs
 if ! verify_certs; then
     echo "⚠️ Verification failed! Regenerating certificates..."
-    sudo ./generate-certs.sh $CERT_DIR
-    sudo chown -R $(whoami):$(whoami) $CERT_DIR
+    ./generate-certs.sh $CERT_DIR
+    # chown -R $(whoami):$(whoami) $CERT_DIR
     # Re-run verification after regeneration
     if ! verify_certs; then
         echo "❌ ERROR: Certificate verification failed after regeneration!"
@@ -248,25 +248,25 @@ while IFS= read -r NODE; do
         continue;
     fi
     install_rke2 "$NODE" "server";
-done < <(sudo virsh list --all | awk '/running/ && $2 ~ /'"$SERVER_NODE_PATTERN"'/ {print $2}')
+done < <(virsh list --all | awk '/running/ && $2 ~ /'"$SERVER_NODE_PATTERN"'/ {print $2}')
 
 # Step 2: Install RKE2 on ETCD Nodes
 echo "Setting up ETCD Nodes..."
 while IFS= read -r NODE; do
     install_rke2 "$NODE" "server";
-done < <(sudo virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {print $2}')
+done < <(virsh list --all | awk '/running/ && $2 ~ /'"$ETCD_NODE_PATTERN"'/ {print $2}')
 
 # Step 3: Install RKE2 on Additional Control Plane Nodes
 echo "Setting up Control Plane Nodes..."
 while IFS= read -r NODE; do
     install_rke2 "$NODE" "server";
-done < <(sudo virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {print $2}')
+done < <(virsh list --all | awk '/running/ && $2 ~ /'"$CONTROL_NODE_PATTERN"'/ {print $2}')
 
 # Step 4: Install RKE2 on Worker Nodes
 echo "Setting up Worker Nodes..."
 while IFS= read -r NODE; do
     install_rke2 "$NODE" "agent";
-done < <(sudo virsh list --all | awk '/running/ && $2 ~ /'"$WORKER_NODE_PATTERN"'/ {print $2}')
+done < <(virsh list --all | awk '/running/ && $2 ~ /'"$WORKER_NODE_PATTERN"'/ {print $2}')
 
 # Step 5: Validate Cluster Setup
 echo "Verifying cluster status..."
