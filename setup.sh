@@ -312,25 +312,10 @@ echo "✅ MetalLB Webhook is ready!"
 echo "Configuring MetalLB..."
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: default
-  namespace: metallb-system
-spec:
-  addresses:
-  - 10.0.0.110-10.0.0.150  # Choose an unused IP range
----
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: default
-  namespace: metallb-system
+$(<"yaml/metal-lb-config.yaml")
 EOF"
 
-
 # Step 7: Install Rancher via Helm
-
 BOOTSTRAP_PWD=$(openssl rand -base64 12)
 echo "Deploying Rancher UI on RKE2 cluster..."
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo helm repo add rancher-stable https://releases.rancher.com/server-charts/stable"
@@ -491,5 +476,9 @@ volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Delete
 EOF"
 
+# add github actions service account
+ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+$(<"yaml/github-actions-sa.yaml")
+EOF"
 
 echo "🎉 Rancher setup completed successfully!"
