@@ -411,6 +411,7 @@ roleTemplateName: cluster-owner
 EOF"
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
+accessMode: required
 apiVersion: management.cattle.io/v3
 kind: AuthConfig
 metadata:
