@@ -45,17 +45,17 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Prepare Configs
+        shell: bash -ileo pipefail {0}
+        run: |
+          ./prepare.sh
+
       - name: Terraform Init
         run: terraform init 
 
       - name: Terraform Destroy
         run: |
           terraform destroy -auto-approve
-
-      - name: Prepare Configs
-        shell: bash -ileo pipefail {0}
-        run: |
-          ./prepare.sh
 
       - name: Build cluster
         shell: bash -ileo pipefail {0}
