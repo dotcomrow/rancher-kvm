@@ -64,7 +64,7 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     
 done
 
-CERT_DIR="/home/chris/certs"
+CERT_DIR="~/certs"
 EXPECTED_CERTS=(
     "$CERT_DIR/ca.crt"
     "$CERT_DIR/ca.key"
