@@ -112,7 +112,7 @@ variable "CTRL_NODE_COUNT" {
 }
 
 variable "CTRL_NODE_VCPU" {
-  default = 8
+  default = 6
   type    = number
 }
 
@@ -139,7 +139,7 @@ variable "WORK_NODE_COUNT" {
 }
 
 variable "WORK_NODE_VCPU" {
-  default = 56
+  default = 54
   type    = number
 }
 
