@@ -18,8 +18,7 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
         "ssh -n $SSH_USER@$vm_name 'until [ -f /home/$SSH_USER/fin ]; do sleep 1; done'" \
         "ssh -n $SSH_USER@$vm_name 'echo /home/$SSH_USER/fin'"
 
-    echo "Adding host entry for $vm_name"
-    
+    echo "Adding host entry for $vm_name" 
 done
 
 
@@ -27,7 +26,6 @@ done
 if ! verify_certs; then
     echo "⚠️ Verification failed! Regenerating certificates..."
     ./generate-certs.sh $CERT_DIR
-    # chown -R $(whoami):$(whoami) $CERT_DIR
     # Re-run verification after regeneration
     if ! verify_certs; then
         echo "❌ ERROR: Certificate verification failed after regeneration!"

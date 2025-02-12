@@ -43,7 +43,7 @@ hostname: 'github.com'
 tls: true
 type: githubConfig
 logoutAllSupported: false
-rancherUrl: 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN'
+rancherUrl: 'https://{{RANCHER_HOSTNAME}}.{{RANCHER_DOMAIN}}'
 allowedPrincipalIds:
   - 'github_team:{{GITHUB_AUTH_VAL}}'
   - 'github_user:{{GITHUB_SA_AUTH_VAL}}'
