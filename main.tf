@@ -171,7 +171,7 @@ provider "libvirt" {
 # https://www.terraform.io/docs/providers/template/d/cloudinit_config.html
 data "template_file" "user_data_srvr" {
   count = var.SRVR_NODE_COUNT
-  template = file("${path.module}/cloud_init_srvr.cfg")
+  template = file("${path.module}/config/cloud_init_srvr.cfg")
   vars = {
     VM_USER = var.VM_USER
     HOSTNAME = format("${var.SRVR_NODE_HOSTNAME}-%02s", count.index)
@@ -181,7 +181,7 @@ data "template_file" "user_data_srvr" {
 
 data "template_file" "user_data_work" {
   count = var.WORK_NODE_COUNT
-  template = file("${path.module}/cloud_init_work.cfg")
+  template = file("${path.module}/config/cloud_init_work.cfg")
   vars = {
     VM_USER = var.VM_USER
     HOSTNAME = format("${var.WORK_NODE_HOSTNAME}-%02s", count.index)
@@ -191,7 +191,7 @@ data "template_file" "user_data_work" {
 
 data "template_file" "user_data_etcd" {
   count = var.ETCD_NODE_COUNT
-  template = file("${path.module}/cloud_init_etcd.cfg")
+  template = file("${path.module}/config/cloud_init_etcd.cfg")
   vars = {
     VM_USER = var.VM_USER
     HOSTNAME = format("${var.ETCD_NODE_HOSTNAME}-%02s", count.index)
@@ -201,7 +201,7 @@ data "template_file" "user_data_etcd" {
 
 data "template_file" "user_data_ctrl" {
   count = var.CTRL_NODE_COUNT
-  template = file("${path.module}/cloud_init_ctrl.cfg")
+  template = file("${path.module}/config/cloud_init_ctrl.cfg")
   vars = {
     VM_USER = var.VM_USER
     HOSTNAME = format("${var.CTRL_NODE_HOSTNAME}-%02s", count.index)
@@ -210,7 +210,7 @@ data "template_file" "user_data_ctrl" {
 }
 
 data "template_file" "network_config" {
-  template = file("${path.module}/network_config.cfg")
+  template = file("${path.module}/config/network_config.cfg")
 }
 
 ################################################################################
