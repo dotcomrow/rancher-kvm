@@ -56,7 +56,3 @@ kind: Setting
 metadata:
   name: auth-provider
 value: github
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
