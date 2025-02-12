@@ -398,7 +398,8 @@ EOF"
 
 # add github actions service account
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-$(<"yaml/github-actions-sa.yaml")
+$(load_yaml_and_replace_variables 'yaml/github-actions-sa.yaml')
 EOF"
 
 echo "🎉 Rancher setup completed successfully!"
+

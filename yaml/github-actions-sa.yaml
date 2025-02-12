@@ -1,36 +1,57 @@
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: github-actions-role
+  name: github-actions-sa
   namespace: cattle-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: platform-admin
 rules:
-  - apiGroups: [""]
+  - apiGroups: [""]  # Core API (namespaces, services, secrets, configmaps)
     resources:
+      - namespaces
+      - services
+      - secrets
       - configmaps
       - persistentvolumeclaims
-      - pods
-      - pods/exec
-      - pods/log
-      - pods/portforward
-      - secrets
-      - services
-    verbs:
-      - get
-      - watch
-      - list
-      - update
-      - create
-      - patch
-      - delete
-  - apiGroups: ["apps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  - apiGroups: ["apps"]  # Deployments and StatefulSets
     resources:
       - deployments
       - statefulsets
-    verbs:
-      - get
-      - list
-      - watch
-      - update
-      - create
-      - patch
-      - delete
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  - apiGroups: ["networking.k8s.io"]  # Ingress management
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  - apiGroups: ["rbac.authorization.k8s.io"]  # RBAC setup for new service accounts
+    resources:
+      - roles
+      - rolebindings
+      - clusterroles
+      - clusterrolebindings
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  - apiGroups: ["helm.cattle.io"]  # Helm-related resources in Rancher
+    resources:
+      - helmreleases
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  - apiGroups: ["apiextensions.k8s.io"]  # CustomResourceDefinitions (CRDs)
+    resources:
+      - customresourcedefinitions
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: management.cattle.io/v3
+kind: ClusterRoleTemplateBinding
+metadata:
+  name: github-actions-platform-admin
+  namespace: local  # "local" represents the cluster in Rancher
+clusterName: local            # Adjust if your cluster name is different
+roleTemplateName: "platform-admin"  # The Rancher RoleTemplate you created
+groupName: 'github_team:{{GITHUB_SA_AUTH_VAL}}'  # Replace with actual GitHub service account ID
