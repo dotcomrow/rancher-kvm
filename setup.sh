@@ -93,6 +93,24 @@ verify_certs() {
     return $missing_certs
 }
 
+load_yaml_and_replace_variables() {
+  local input_file="$1"
+
+  if [[ ! -f "$input_file" ]]; then
+      echo "Error: File '$input_file' not found!" >&2
+      return 1
+  fi
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    while [[ "$line" =~ \{\{([A-Za-z_][A-Za-z0-9_]*)\}\} ]]; do
+      VAR_NAME="${BASH_REMATCH[1]}"
+      VAR_VALUE="${!VAR_NAME}"  # Get the value of the variable
+      line="${line//\{\{$VAR_NAME\}\}/$VAR_VALUE}"
+    done
+    echo "$line"
+  done < "$input_file"
+}
+
 # Run verification, if it fails, regenerate certs
 if ! verify_certs; then
     echo "⚠️ Verification failed! Regenerating certificates..."
@@ -359,65 +377,7 @@ if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_AUTH_V
 fi
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: management.cattle.io/v3
-kind: GlobalRoleBinding
-metadata:
-  name: github-k8s-cluster-admins
-  labels:
-    auth-provider: github
-globalRoleName: admin
-groupPrincipalName: 'github_team:$GITHUB_AUTH_VAL'
-EOF"
-
-
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: github-team-cluster-admins
-subjects:
-  - kind: Group
-    name: 'github_team:$GITHUB_AUTH_VAL'  # Replace with your team
-    apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
-EOF"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: management.cattle.io/v3
-kind: ClusterRoleTemplateBinding
-metadata:
-  name: github-team-cluster-owner
-  namespace: local            # Adjust if your cluster name is different
-clusterName: local            # Adjust if your cluster name is different
-groupName: 'github_team:$GITHUB_AUTH_VAL'
-roleTemplateName: cluster-owner
-EOF"
-
-ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-accessMode: required
-apiVersion: management.cattle.io/v3
-kind: AuthConfig
-metadata:
-  name: github
-  namespace: cattle-system
-enabled: true
-displayName: GitHub Authentication
-clientId: '$GITHUB_CLIENT_ID'
-clientSecret: '$GITHUB_CLIENT_SECRET'
-hostname: 'github.com'
-tls: true
-type: githubConfig
-logoutAllSupported: false
-rancherUrl: 'https://$RANCHER_HOSTNAME.$RANCHER_DOMAIN'
-allowedPrincipalIds:
-  - 'github_team:$GITHUB_AUTH_VAL'
-scopes:
-  - 'read:user'
-  - 'user:email'
-  - 'read:org'
+$(load_yaml_and_replace_variables 'yaml/github-auth-setup.yaml')
 EOF"
 
 ssh -n "$SSH_USER@$RANCHER_MASTER" "
@@ -441,40 +401,7 @@ EOF"
 
 # create longhorn storage classes
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: longhorn
-  annotations:
-    storageclass.kubernetes.io/is-default-class: 'true'
-provisioner: driver.longhorn.io
-allowVolumeExpansion: true
-reclaimPolicy: Retain
-volumeBindingMode: Immediate
-parameters:
-  numberOfReplicas: '1'  # Adjust based on available nodes
-  staleReplicaTimeout: '30'
-
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: longhorn-rwx
-provisioner: driver.longhorn.io
-allowVolumeExpansion: true
-reclaimPolicy: Retain
-volumeBindingMode: Immediate
-parameters:
-  numberOfReplicas: '1'
-  staleReplicaTimeout: '30'
-  fromBackup: ''  # Optional: Restore from backup if needed
-
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: ephemeral-fast
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-reclaimPolicy: Delete
+$(<"yaml/storage-classes.yaml")
 EOF"
 
 # add github actions service account
