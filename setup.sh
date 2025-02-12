@@ -2,50 +2,8 @@
 
 rm -rf ~/.ssh/known_hosts
 
-# SSH User
-SSH_USER="rancher"
-
-# Rancher master node
-RANCHER_MASTER="srvr-node-00"
-
-# Rancher domain
-RANCHER_HOSTNAME="k8s"
-RANCHER_DOMAIN="suncoast.systems"
-
-# Maximum number of retries
-MAX_RETRIES=10
-# Time to wait between retries
-RETRY_DELAY=20
-
-execute_with_retry() {
-    local cmd="$1"
-    local verify_cmd="$2"
-    local retries=$MAX_RETRIES  # Number of retries
-    local delay=$RETRY_DELAY    # Delay between retries in seconds
-    local count=0
-    local timeout=15 # Timeout in seconds for SCP
-
-    for ((count=1; count<=retries; count++)); do
-        echo "Executing: $cmd"
-
-        # Run command with timeout protection
-        timeout "$timeout" bash -c "$cmd" && {
-            echo "✅ Command succeeded"
-            
-            # Verify the file exists
-            echo "Verifying: $verify_cmd"
-            eval "$verify_cmd" && return 0
-
-            echo "❌ Verification failed, retrying..."
-        }
-
-        echo "⚠️ Retry $count/$retries failed, retrying in $delay seconds..."
-        sleep "$delay"
-    done
-
-    echo "❌ ERROR: Command failed after $retries attempts: $cmd"
-    return 1  # Indicate failure
-}
+source variables.sh
+source functions.sh
 
 # iterate over machines and add host entries to hosts file using qemu guest agent
 virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
@@ -64,52 +22,6 @@ virsh list --all | grep running | awk '{print $2}' | while read vm_name; do
     
 done
 
-CERT_DIR="$HOME/certs"
-EXPECTED_CERTS=(
-    "$CERT_DIR/ca.crt"
-    "$CERT_DIR/ca.key"
-    "$CERT_DIR/etcd-server.crt"
-    "$CERT_DIR/etcd-server.key"
-    "$CERT_DIR/kube-apiserver.crt"
-    "$CERT_DIR/kube-apiserver.key"
-    "$CERT_DIR/node.crt"
-    "$CERT_DIR/node.key"
-)
-
-# Function to verify that certificates exist
-verify_certs() {
-    echo "🔍 Verifying generated certificates..."
-    local missing_certs=0
-
-    for cert in "${EXPECTED_CERTS[@]}"; do
-        if [ ! -f "$cert" ]; then
-            echo "❌ Missing certificate: $cert"
-            missing_certs=1
-        else
-            echo "✅ Found: $cert"
-        fi
-    done
-
-    return $missing_certs
-}
-
-load_yaml_and_replace_variables() {
-  local input_file="$1"
-
-  if [[ ! -f "$input_file" ]]; then
-      echo "Error: File '$input_file' not found!" >&2
-      return 1
-  fi
-
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    while [[ "$line" =~ \{\{([A-Za-z_][A-Za-z0-9_]*)\}\} ]]; do
-      VAR_NAME="${BASH_REMATCH[1]}"
-      VAR_VALUE="${!VAR_NAME}"  # Get the value of the variable
-      line="${line//\{\{$VAR_NAME\}\}/$VAR_VALUE}"
-    done
-    echo "$line"
-  done < "$input_file"
-}
 
 # Run verification, if it fails, regenerate certs
 if ! verify_certs; then
@@ -126,138 +38,22 @@ fi
 
 echo "✅ All certificates verified successfully!"
 
+# configure github oidc
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "❌ ERROR: Config file $CONFIG_FILE not found!"
+    exit 1
+fi
+
+# Read values from the config file
+source "$CONFIG_FILE"
+
+# Ensure required variables are set
+if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_AUTH_VAL" || -z "$GITHUB_ORG" || -z "$GITHUB_TEAM" ]]; then
+    echo "❌ ERROR: Missing required variables in $CONFIG_FILE!"
+    exit 1
+fi
 # Rancher RKE2 Cluster Installation Script
-
-# Custom TLS Certificate Paths
-CUSTOM_CA_CERT="$CERT_DIR/ca.crt"
-CUSTOM_CA_KEY="$CERT_DIR/ca.key"
-CUSTOM_KUBE_CERT="$CERT_DIR/kube-apiserver.crt"
-CUSTOM_KUBE_KEY="$CERT_DIR/kube-apiserver.key"
-CUSTOM_ETCD_CERT="$CERT_DIR/etcd-server.crt"
-CUSTOM_ETCD_KEY="$CERT_DIR/etcd-server.key"
-CUSTOM_NODE_CERT="$CERT_DIR/node.crt"
-CUSTOM_NODE_KEY="$CERT_DIR/node.key"
-
-# Function to Copy Certificates to Nodes and Add CA to Trust Store
-copy_certs_and_trust() {
-    local NODE_IP=$1
-    echo "📜 Copying certificates to $NODE_IP and adding CA to system trust store..."
-
-    # Copy certificates with verification
-    execute_with_retry \
-        "scp $CUSTOM_CA_CERT $SSH_USER@$NODE_IP:~/ca.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/ca.crt'"
-
-    execute_with_retry \
-        "scp $CUSTOM_CA_KEY $SSH_USER@$NODE_IP:~/ca.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/ca.key'"
-
-    execute_with_retry \
-        "scp $CUSTOM_KUBE_CERT $SSH_USER@$NODE_IP:~/kube-apiserver.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/kube-apiserver.crt'"
-
-    execute_with_retry \
-        "scp $CUSTOM_KUBE_KEY $SSH_USER@$NODE_IP:~/kube-apiserver.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/kube-apiserver.key'"
-
-    execute_with_retry \
-        "scp $CUSTOM_ETCD_CERT $SSH_USER@$NODE_IP:~/etcd-server.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/etcd-server.crt'"
-
-    execute_with_retry \
-        "scp $CUSTOM_ETCD_KEY $SSH_USER@$NODE_IP:~/etcd-server.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/etcd-server.key'"
-
-    execute_with_retry \
-        "scp $CUSTOM_NODE_CERT $SSH_USER@$NODE_IP:~/node.crt" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/node.crt'"
-
-    execute_with_retry \
-        "scp $CUSTOM_NODE_KEY $SSH_USER@$NODE_IP:~/node.key" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f ~/node.key'"
-
-    # Move certificates to RKE2 directory
-    execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo mkdir -p /etc/rancher/rke2 && sudo cp ~/*.crt /etc/rancher/rke2/'" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.crt'"
-
-    execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo mkdir -p /etc/rancher/rke2 && sudo cp ~/*.key /etc/rancher/rke2/'" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /etc/rancher/rke2/ca.key'"
-
-    # Ensure correct permissions
-    execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo chmod 600 /etc/rancher/rke2/*'" \
-        "ssh -n $SSH_USER@$NODE_IP 'ls -l /etc/rancher/rke2/'"
-
-    # Add CA to Ubuntu's trust store
-    execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo cp /etc/rancher/rke2/ca.crt /usr/local/share/ca-certificates/custom-ca.crt'" \
-        "ssh -n $SSH_USER@$NODE_IP 'test -f /usr/local/share/ca-certificates/custom-ca.crt'"
-
-    execute_with_retry \
-        "ssh -n $SSH_USER@$NODE_IP 'sudo update-ca-certificates'" \
-        "ssh -n $SSH_USER@$NODE_IP 'ls -al /etc/ssl/certs | grep custom-ca.crt'"
-}
-
-# Function to install RKE2 on a node
-install_rke2() {
-    local NODE_IP=$1
-    local NODE_TYPE=$2
-    echo "Installing RKE2 on $NODE_IP ($NODE_TYPE)..."
-
-    ssh -n $SSH_USER@$NODE_IP "sudo mkdir -p /etc/rancher/rke2";
-    
-    copy_certs_and_trust  $NODE_IP
-
-    # Create custom RKE2 config with custom certificates
-    ssh -n $SSH_USER@$NODE_IP "sudo tee /etc/rancher/rke2/config.yaml > /dev/null <<EOF
-cluster-domain: $RANCHER_DOMAIN
-
-node-label:
-  - "cluster-name=k8s-cluster"
-
-tls-san:
-  - ${NODE_IP}
-  - ${RANCHER_HOSTNAME}
-
-etcd:
-  peer-cert-file: /etc/rancher/rke2/etcd-server.crt
-  peer-key-file: /etc/rancher/rke2/etcd-server.key
-  trusted-ca-file: /etc/rancher/rke2/ca.crt
-
-kube-apiserver:
-  tls-cert-file: /etc/rancher/rke2/kube-apiserver.crt
-  tls-private-key-file: /etc/rancher/rke2/kube-apiserver.key
-
-tls-cert-file: /etc/rancher/ssl/ca.crt
-tls-private-key-file: /etc/rancher/ssl/ca.key
-
-tls:
-  cert-file: /etc/rancher/rke2/node.crt
-  key-file: /etc/rancher/rke2/node.key
-  ca-file: /etc/rancher/rke2/ca.crt
-EOF"
-
-    if [ ! -z "$RKE2_TOKEN" ]; then
-        ssh -n $SSH_USER@$NODE_IP "echo 'token: $RKE2_TOKEN' | sudo tee -a /etc/rancher/rke2/config.yaml";
-        ssh -n $SSH_USER@$NODE_IP "echo 'server: https://$RANCHER_MASTER:9345' | sudo tee -a /etc/rancher/rke2/config.yaml";
-    fi
-
-    # Start RKE2
-    if [[ "$NODE_TYPE" == "server" ]]; then
-        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-server && sudo systemctl start rke2-server"
-    else
-        ssh -n $SSH_USER@$NODE_IP "sudo systemctl enable rke2-agent && sudo systemctl start rke2-agent"
-    fi
-}
-
-# Step 1: Install RKE2 on Server Nodes (First node is the leader)
 echo "Setting up Rancher Server Nodes..."
-SERVER_NODE_PATTERN="srvr-node-"
-ETCD_NODE_PATTERN="etcd-node-"
-CONTROL_NODE_PATTERN="ctrl-node-"
-WORKER_NODE_PATTERN="work-node-"
 
 install_rke2 "$RANCHER_MASTER" "server";
 RKE2_TOKEN=$(ssh -n $SSH_USER@$RANCHER_MASTER "sudo cat /var/lib/rancher/rke2/server/node-token");
@@ -356,25 +152,6 @@ ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rk
 # add longhorn
 echo "Adding Longhorn storage..."
 ssh -n $SSH_USER@$RANCHER_MASTER "sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml"
-
-# configure github oidc
-# Load GitHub OAuth credentials from config file
-CONFIG_FILE="~/github-auth.conf"
-CONFIG_FILE=$(eval echo "$CONFIG_FILE")
-
-if [ ! -f "$CONFIG_FILE" ]; then
-    echo "❌ ERROR: Config file $CONFIG_FILE not found!"
-    exit 1
-fi
-
-# Read values from the config file
-source "$CONFIG_FILE"
-
-# Ensure required variables are set
-if [[ -z "$GITHUB_CLIENT_ID" || -z "$GITHUB_CLIENT_SECRET" || -z "$GITHUB_AUTH_VAL" || -z "$GITHUB_ORG" || -z "$GITHUB_TEAM" ]]; then
-    echo "❌ ERROR: Missing required variables in $CONFIG_FILE!"
-    exit 1
-fi
 
 ssh -n $SSH_USER@$RANCHER_MASTER "cat <<EOF | sudo kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml apply -f -
 $(load_yaml_and_replace_variables 'yaml/github-auth-setup.yaml')
