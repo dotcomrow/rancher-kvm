@@ -27,7 +27,6 @@ done
 if ! verify_certs; then
     echo "⚠️ Verification failed! Regenerating certificates..."
     ./generate-certs.sh $CERT_DIR
-    # chown -R $(whoami):$(whoami) $CERT_DIR
     # Re-run verification after regeneration
     if ! verify_certs; then
         echo "❌ ERROR: Certificate verification failed after regeneration!"
