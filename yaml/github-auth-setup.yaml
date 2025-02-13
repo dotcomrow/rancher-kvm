@@ -46,7 +46,7 @@ logoutAllSupported: false
 rancherUrl: 'https://{{RANCHER_HOSTNAME}}.{{RANCHER_DOMAIN}}'
 allowedPrincipalIds:
   - 'github_team:{{GITHUB_AUTH_VAL}}'
-  - 'github_user:{{GITHUB_SA_AUTH_VAL}}'
+  - 'github_team:{{GITHUB_SA_AUTH_VAL}}'
 scopes:
   - 'read:user'
   - 'user:email'
